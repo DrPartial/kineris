@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #10151a;
+  --color-ink-muted: #4a5560;
+  --color-ink-hint: #7c8690;
+  --color-surface: #ffffff;
+  --color-surface-page: #f6f8f9;
+  --color-surface-sunken: #eef1f3;
+  --color-border: #dde3e7;
+  --color-accent: #0f5f6b;
+  --color-accent-hover: #0c4c56;
+  --color-accent-soft: #e4f0f1;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+body {
+  background: var(--color-surface-page);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+.data-figure {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}

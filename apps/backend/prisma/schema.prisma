@@ -1,0 +1,207 @@
+// Kineris Labs data model.
+//
+// Two things here exist directly because of the instruction pack's
+// compliance rules, not ordinary e-commerce need:
+//   - RuoDeclaration: pack 2.2 requires both checkbox texts stored with a
+//     timestamp against the order, "so we can show them to a payment
+//     processor if asked", kept as its own table, one-to-one with Order,
+//     rather than two booleans on Order, so the exact text shown at the time
+//     is what's stored (the checkbox copy is legal text, not just a flag).
+//   - Batch.isCurrent + OrderItem.batchId: every batch is CoA-backed (pack
+//     5), and every order item records which batch actually shipped, not
+//     just which product, and the two are different questions ("what batch is
+//     live on the page today" vs "what batch did this specific customer
+//     get"), and both need to be true.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ProductCategory {
+  peptide
+  lab_supply
+}
+
+enum OrderStatus {
+  pending
+  paid
+  shipped
+  cancelled
+}
+
+model Product {
+  id                 String           @id @default(cuid())
+  slug               String           @unique
+  name               String
+  synonyms           String[]         @default([])
+  category           ProductCategory
+  casNumber          String?
+  molecularFormula   String?
+  molecularWeight    String?
+  form               String?
+  storageConditions  String?
+  published          Boolean          @default(false)
+  lowStockThreshold  Int              @default(5)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  variants           ProductVariant[]
+  batches            Batch[]
+}
+
+model ProductVariant {
+  id                String        @id @default(cuid())
+  productId         String
+  product           Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  size              String
+  priceMinorUnits   Int
+  purity            String?
+  stock             Int           @default(0)
+  createdAt         DateTime      @default(now())
+
+  bundleComponents  BundleComponent[]
+  orderItems        OrderItem[]
+
+  @@unique([productId, size])
+}
+
+model Batch {
+  id            String    @id @default(cuid())
+  productId     String
+  product       Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  batchNumber   String
+  coaFileUrl    String?
+  isCurrent     Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+
+  orderItems    OrderItem[]
+
+  @@unique([productId, batchNumber])
+}
+
+model Bundle {
+  id          String             @id @default(cuid())
+  slug        String             @unique
+  name        String
+  published   Boolean            @default(false)
+  createdAt   DateTime           @default(now())
+
+  components  BundleComponent[]
+}
+
+// Bundles draw down the single vials they contain, never their own stock
+// counter (pack 5): this table is the recipe, not inventory.
+model BundleComponent {
+  id          String          @id @default(cuid())
+  bundleId    String
+  bundle      Bundle          @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  variantId   String
+  variant     ProductVariant  @relation(fields: [variantId], references: [id])
+  quantity    Int             @default(1)
+
+  @@unique([bundleId, variantId])
+}
+
+model Customer {
+  id            String             @id @default(cuid())
+  email         String             @unique
+  passwordHash  String
+  createdAt     DateTime           @default(now())
+
+  sessions      CustomerSession[]
+  orders        Order[]
+}
+
+model CustomerSession {
+  id          String    @id @default(cuid())
+  customerId  String
+  customer    Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  expiresAt   DateTime
+  createdAt   DateTime  @default(now())
+}
+
+model AdminUser {
+  id            String          @id @default(cuid())
+  email         String          @unique
+  passwordHash  String
+  createdAt     DateTime        @default(now())
+
+  sessions      AdminSession[]
+}
+
+model AdminSession {
+  id          String     @id @default(cuid())
+  adminId     String
+  admin       AdminUser  @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  expiresAt   DateTime
+  createdAt   DateTime   @default(now())
+}
+
+model Order {
+  id                  String       @id @default(cuid())
+  customerId          String?
+  customer            Customer?    @relation(fields: [customerId], references: [id])
+  customerEmail       String
+  status              OrderStatus  @default(pending)
+  shippingOptionId    String
+  discountCode        String?
+  totalMinorUnits     Int
+  trackingNumber      String?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  items               OrderItem[]
+  declaration         RuoDeclaration?
+}
+
+model OrderItem {
+  id                    String          @id @default(cuid())
+  orderId               String
+  order                 Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variantId             String
+  variant               ProductVariant  @relation(fields: [variantId], references: [id])
+  batchId               String
+  batch                 Batch           @relation(fields: [batchId], references: [id])
+  quantity              Int
+  unitPriceMinorUnits   Int
+}
+
+// One-to-one with Order. Stores the exact declaration text alongside the
+// timestamp, not just a boolean, since the pack treats this as evidence for
+// a payment processor, not an internal flag.
+model RuoDeclaration {
+  id              String    @id @default(cuid())
+  orderId         String    @unique
+  order           Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  termsText       String
+  ruoText         String
+  termsAccepted   Boolean
+  ruoAccepted     Boolean
+  acceptedAt      DateTime
+}
+
+model DiscountCode {
+  id                     String    @id @default(cuid())
+  code                   String    @unique
+  percentOff             Int?
+  amountOffMinorUnits    Int?
+  active                 Boolean   @default(true)
+  createdAt              DateTime  @default(now())
+}
+
+// Captured per pack section 8's "back in stock" email capture, matched to a
+// variant, not a product, since stock (and "back in stock") is per-size.
+model BackInStockRequest {
+  id          String    @id @default(cuid())
+  variantId   String
+  email       String
+  notified    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  @@unique([variantId, email])
+}

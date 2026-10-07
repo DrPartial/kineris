@@ -1,0 +1,20 @@
+{
+  "name": "kineris",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "concurrently -n backend,web,admin -c blue,green,magenta \"pnpm --filter @kineris/backend dev\" \"pnpm --filter @kineris/web dev\" \"pnpm --filter @kineris/admin dev\"",
+    "build": "pnpm --filter @kineris/shared build && pnpm -r --filter=!@kineris/shared build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "db:migrate": "pnpm --filter @kineris/backend db:migrate",
+    "db:seed": "pnpm --filter @kineris/backend db:seed",
+    "db:studio": "pnpm --filter @kineris/backend db:studio"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
