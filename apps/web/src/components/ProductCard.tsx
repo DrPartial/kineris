@@ -1,14 +1,15 @@
 import type { Product } from '@kineris/shared'
 import Link from 'next/link'
 import { Badge } from './Badge'
-import { ImagePlaceholder } from './ImagePlaceholder'
+import { ProductImage } from './ProductImage'
 import { formatGBP } from '@/lib/money'
 
 export function ProductCard({ product }: { product: Product }) {
-  const cheapest = product.variants.reduce(
-    (min, v) => (v.priceMinorUnits < min ? v.priceMinorUnits : min),
-    product.variants[0]?.priceMinorUnits ?? 0,
+  const cheapestVariant = product.variants.reduce<(typeof product.variants)[number] | undefined>(
+    (min, v) => (!min || v.priceMinorUnits < min.priceMinorUnits ? v : min),
+    undefined,
   )
+  const cheapest = cheapestVariant?.priceMinorUnits ?? 0
   const inStock = product.variants.some((v) => v.stock > 0)
   const purity = product.variants[0]?.purity
 
@@ -17,7 +18,16 @@ export function ProductCard({ product }: { product: Product }) {
       href={`/products/${product.slug}`}
       className="group block rounded-md border border-border bg-surface p-4 no-underline transition-colors hover:border-accent"
     >
-      <ImagePlaceholder label={product.name} formula={product.molecularFormula} className="mb-3 aspect-square" />
+      {/* The card is already white and bordered, so the white vial photo needs no frame of its own. */}
+      <ProductImage
+        slug={product.slug}
+        name={product.name}
+        size={cheapestVariant?.size}
+        formula={product.molecularFormula}
+        bordered={false}
+        sizes="(min-width: 1024px) 240px, (min-width: 640px) 33vw, 50vw"
+        className="mb-3 aspect-square"
+      />
       <h3 className="text-sm font-medium text-ink">{product.name}</h3>
       {purity && (
         <div className="mt-1">

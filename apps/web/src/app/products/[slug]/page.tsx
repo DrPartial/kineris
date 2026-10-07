@@ -3,10 +3,10 @@ import { notFound } from 'next/navigation'
 import { AddToCartForm } from '@/components/AddToCartForm'
 import { Badge } from '@/components/Badge'
 import { COACard } from '@/components/COACard'
-import { ImagePlaceholder } from '@/components/ImagePlaceholder'
 import { ProductCard } from '@/components/ProductCard'
 import { Tabs } from '@/components/Tabs'
 import { TrustIconRow } from '@/components/TrustIconRow'
+import { ProductHeroImage, VariantSelectionProvider } from '@/components/VariantSelection'
 import { fetchProduct, fetchProducts } from '@/lib/fetchers'
 import { formatGBP } from '@/lib/money'
 
@@ -71,8 +71,14 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
       />
 
+      <VariantSelectionProvider variants={product.variants}>
       <div className="grid gap-10 lg:grid-cols-2">
-        <ImagePlaceholder label={product.name} formula={product.molecularFormula} className="aspect-square" />
+        <ProductHeroImage
+          slug={product.slug}
+          name={product.name}
+          formula={product.molecularFormula}
+          variants={product.variants}
+        />
 
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-ink">{product.name}</h1>
@@ -99,6 +105,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           </p>
         </div>
       </div>
+      </VariantSelectionProvider>
 
       <div className="mt-12">
         <Tabs

@@ -240,3 +240,26 @@ programmatically, not just read over, before being added.
   tab. Both read as empty on the storefront rather than being hidden.
 - No CAS numbers, molecular formulas, or molecular weights were filled in, on purpose, see the
   top of this file for why.
+
+## Product page images (October 2026)
+
+One vial image per SKU (19 images, 16 products) in `apps/web/public/products/`, named
+`<slug>-<size>.webp` (1200x1200, white, square to fit the `aspect-square` slots). Tooling lives in
+`tools/product-shots/` (see its README); editing `products.json` and re-running regenerates
+everything, including `apps/web/src/lib/product-images.generated.ts`, the manifest the site reads.
+
+- The glass/cap is an AI-generated (Higgsfield) vial with a blank label; **all label text is
+  typeset from the real brand fonts and logo**, never AI-generated, so every SKU is identical in
+  layout and spelling.
+- The labels carry no purity claim and no "human" wording, per the compliance rules above.
+- **Wired into the site**: `ProductCard` shows the cheapest size's vial; the product page shows the
+  vial for the *selected* size (shared state via `VariantSelection.tsx`, since the label prints the
+  strength). A product or size without a matching photo falls back to `ImagePlaceholder` rather
+  than showing another strength's label.
+- **Images are keyed by the catalogue's slug + size**, so `tools/product-shots/products.json` must
+  match `packages/shared/src/catalogue.ts`. `apps/web/src/lib/productImages.test.ts` fails if any
+  catalogue product/size has no image (or an image has no catalogue entry), so adding a product or
+  size without regenerating the shots is caught by `pnpm --filter @kineris/web test`.
+- Verified by running the real storefront against a mock of the product API built from the real
+  catalogue (Postgres wasn't available): shop grid, product page, size-switch image swap, the
+  placeholder fallback and a 390px mobile viewport all behaved, with no horizontal overflow.
