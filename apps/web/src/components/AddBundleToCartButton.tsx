@@ -26,7 +26,7 @@ export function AddBundleToCartButton({ bundle }: { bundle: Bundle }) {
         for (const c of bundle.components) addLine(c.variantId, c.quantity)
         setAdded(true)
       }}
-      className="w-full rounded-sm bg-accent px-5 py-3 text-sm font-medium text-white hover:bg-accent-hover sm:w-auto"
+      className="w-full rounded-sm bg-accent px-5 py-3 text-sm font-medium text-bone hover:bg-accent-hover sm:w-auto"
     >
       {added ? 'Added to cart' : 'Add bundle to cart'}
     </button>

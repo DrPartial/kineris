@@ -1,24 +1,44 @@
 @import "tailwindcss";
 
+/* Kineris brand system (kineris-brand-kit), mirrored from apps/web so the
+   admin panel reads as the same product. */
 @theme {
-  --color-ink: #10151a;
-  --color-ink-muted: #4a5560;
-  --color-ink-hint: #7c8690;
+  --color-pine-ink: #1c2b24;
+  --color-bone: #f6f4ee;
+  --color-jade: #3e6f56;
+  --color-ember: #e07b54;
+  --color-sage-mist: #e8ece4;
+  --color-stone: #6b665c;
+
+  --color-ink: var(--color-pine-ink);
+  --color-ink-muted: var(--color-stone);
+  --color-ink-hint: color-mix(in srgb, var(--color-stone) 65%, var(--color-bone));
   --color-surface: #ffffff;
-  --color-surface-page: #f6f8f9;
-  --color-surface-sunken: #eef1f3;
-  --color-border: #dde3e7;
-  --color-accent: #0f5f6b;
-  --color-accent-hover: #0c4c56;
-  --color-accent-soft: #e4f0f1;
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --color-surface-page: var(--color-bone);
+  --color-surface-sunken: var(--color-sage-mist);
+  --color-border: rgba(28, 43, 36, 0.15);
+  --color-border-strong: rgba(28, 43, 36, 0.3);
+  --color-accent: var(--color-jade);
+  --color-accent-hover: color-mix(in srgb, var(--color-jade) 85%, black);
+  --color-accent-soft: color-mix(in srgb, var(--color-jade) 14%, white);
+
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-display: var(--font-sora), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
 }
 
 body {
   background: var(--color-surface-page);
   color: var(--color-ink);
   font-family: var(--font-sans);
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
 }
 
 .data-figure {

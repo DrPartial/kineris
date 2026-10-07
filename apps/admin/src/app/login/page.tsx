@@ -26,7 +26,8 @@ export default function LoginPage() {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-4">
-      <h1 className="text-xl font-semibold text-ink">Kineris Admin</h1>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/brand/kineris-logo-light.svg" alt="Kineris" className="h-11 w-auto" />
       <form onSubmit={submit} className="mt-6 space-y-4">
         <input
           type="email"
@@ -48,7 +49,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded-sm bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"
+          className="w-full rounded-sm bg-accent px-4 py-2.5 text-sm font-medium text-bone hover:bg-accent-hover disabled:opacity-50"
         >
           Sign in
         </button>

@@ -11,6 +11,8 @@ interface Batch {
   id: string
   batchNumber: string
   coaFileUrl: string | null
+  purity: string | null
+  reportedAt: string | null
   isCurrent: boolean
 }
 
@@ -142,6 +144,12 @@ export default function EditProductPage() {
             <li key={b.id} className="flex items-center justify-between px-3 py-2">
               <span className="data-figure text-ink">
                 {b.batchNumber} {b.isCurrent && <span className="text-accent">(current)</span>}
+                {b.purity && <span className="ml-2 text-xs text-ink-hint">{b.purity}</span>}
+                {b.reportedAt && (
+                  <span className="ml-2 text-xs text-ink-hint">
+                    reported {new Date(b.reportedAt).toLocaleDateString('en-GB')}
+                  </span>
+                )}
               </span>
               {b.coaFileUrl ? (
                 <a href={b.coaFileUrl} className="text-xs text-accent hover:text-accent-hover">
@@ -219,6 +227,14 @@ function BatchUploadForm({ onUpload }: { onUpload: (formData: FormData) => void 
           required
           className="w-40 rounded-sm border border-border px-2 py-1 text-sm"
         />
+      </div>
+      <div>
+        <label className="mb-1 block text-xs text-ink-hint">Purity</label>
+        <input name="purity" placeholder="e.g. 99.1%" className="w-28 rounded-sm border border-border px-2 py-1 text-sm" />
+      </div>
+      <div>
+        <label className="mb-1 block text-xs text-ink-hint">Reported date</label>
+        <input name="reportedAt" type="date" className="rounded-sm border border-border px-2 py-1 text-sm" />
       </div>
       <div>
         <label className="mb-1 block text-xs text-ink-hint">CoA PDF</label>

@@ -1,25 +1,52 @@
 @import "tailwindcss";
 
 /*
- * Light mode only for this pass. The brief asks for "clinical, precise and
- * trustworthy," and a single considered palette serves that better than a
- * half-built dark mode. Revisit if that changes.
+ * Kineris brand system (kineris-brand-kit, applied in full). Light mode
+ * only for this pass -- see the brand-kit's own `.on-dark` pattern below for
+ * the one deliberately dark surface (the footer), rather than a site-wide
+ * dark theme.
  */
 @theme {
-  --color-ink: #10151a;
-  --color-ink-muted: #4a5560;
-  --color-ink-hint: #7c8690;
+  /* Raw palette, from kineris-brand-kit/tokens/colors.css */
+  --color-pine-ink: #1c2b24;
+  --color-bone: #f6f4ee;
+  --color-jade: #3e6f56;
+  --color-ember: #e07b54;
+  --color-sage-mist: #e8ece4;
+  --color-stone: #6b665c;
+
+  /* Semantic aliases -- components reference these, never the raw palette
+     or a hardcoded hex, so a future palette change stays a one-file edit. */
+  --color-ink: var(--color-pine-ink);
+  --color-ink-muted: var(--color-stone);
+  --color-ink-hint: color-mix(in srgb, var(--color-stone) 65%, var(--color-bone));
   --color-surface: #ffffff;
-  --color-surface-page: #f6f8f9;
-  --color-surface-sunken: #eef1f3;
-  --color-border: #dde3e7;
-  --color-accent: #0f5f6b;
-  --color-accent-hover: #0c4c56;
-  --color-accent-soft: #e4f0f1;
-  --color-ruo-bar: #10151a;
-  --color-ruo-bar-ink: #f6f8f9;
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --color-surface-page: var(--color-bone);
+  --color-surface-sunken: var(--color-sage-mist);
+  --color-border: rgba(28, 43, 36, 0.15);
+  --color-border-strong: rgba(28, 43, 36, 0.3);
+  --color-accent: var(--color-jade);
+  --color-accent-hover: color-mix(in srgb, var(--color-jade) 85%, black);
+  --color-accent-soft: color-mix(in srgb, var(--color-jade) 14%, white);
+  /* "Verified" reuses Jade rather than a second green hue -- the brand kit's
+     palette has one accent, not a dedicated success color. */
+  --color-verified: var(--color-jade);
+  --color-verified-soft: var(--color-sage-mist);
+  --color-ruo-bar: var(--color-pine-ink);
+  --color-ruo-bar-ink: var(--color-bone);
+
+  /* var(--font-manrope)/var(--font-sora) are populated by next/font/google in
+     layout.tsx -- kept as separate variable names from these semantic
+     tokens so Tailwind's own @theme defaults here never race next/font's
+     className-applied values in the cascade. */
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-display: var(--font-sora), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Shape language: flat, no shadows/gradients, these three radii only. */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
 }
 
 body {
@@ -28,8 +55,28 @@ body {
   font-family: var(--font-sans);
 }
 
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+}
+
 /* Every number that matters to a researcher (CAS, formula, batch, price) reads as data, not prose. */
 .data-figure {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
+}
+
+/*
+ * Flips ink/surface/border/accent roles for the one deliberately dark
+ * surface on the site (the footer). Apply to a container; every ink-*,
+ * border, and accent utility used by its descendants picks up the dark-safe
+ * value automatically via the CSS cascade, no component changes needed.
+ */
+.on-dark {
+  --color-ink: var(--color-bone);
+  --color-ink-muted: #c9c4b8;
+  --color-ink-hint: color-mix(in srgb, #c9c4b8 70%, var(--color-pine-ink));
+  --color-border: rgba(246, 244, 238, 0.15);
+  /* Jade-on-Pine-Ink fails contrast (about 2.5:1); on a dark surface the
+     accent role becomes Bone instead of the brand green. */
+  --color-accent: var(--color-bone);
 }

@@ -41,13 +41,13 @@ export function AddToCartForm({ variants }: { variants: ProductVariant[] }) {
       </div>
 
       <p className="data-figure text-2xl font-semibold text-ink">{formatGBP(selected.priceMinorUnits)}</p>
-      <p className="text-sm text-ink-muted">
-        {inStock
-          ? selected.stock <= 5
-            ? `Only ${selected.stock} remaining`
-            : 'In stock'
-          : 'Out of stock'}
-      </p>
+      {inStock && selected.stock <= 5 ? (
+        <span className="data-figure inline-block rounded-sm bg-ember px-2 py-1 text-xs font-medium text-pine-ink">
+          Only {selected.stock} remaining
+        </span>
+      ) : (
+        <p className="text-sm text-ink-muted">{inStock ? 'In stock' : 'Out of stock'}</p>
+      )}
 
       {inStock ? (
         <button
@@ -56,7 +56,7 @@ export function AddToCartForm({ variants }: { variants: ProductVariant[] }) {
             addLine(selected.id, 1)
             setAdded(true)
           }}
-          className="w-full rounded-sm bg-accent px-5 py-3 text-sm font-medium text-white hover:bg-accent-hover sm:w-auto"
+          className="w-full rounded-sm bg-accent px-5 py-3 text-sm font-medium text-bone hover:bg-accent-hover sm:w-auto"
         >
           {added ? 'Added to cart' : 'Add to cart'}
         </button>

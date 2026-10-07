@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { TrustIconRow } from './TrustIconRow'
 
 const LEGAL_LINKS = [
   { href: '/legal/terms', label: 'Terms & Conditions' },
@@ -16,8 +17,13 @@ const LEGAL_LINKS = [
  */
 export function SiteFooter() {
   return (
-    <footer className="border-t border-border bg-surface mt-16">
-      <div className="mx-auto max-w-6xl px-4 py-10 text-sm text-ink-muted space-y-6">
+    <footer className="on-dark mt-16 border-t border-border bg-pine-ink text-ink-muted">
+      <div className="mx-auto max-w-6xl px-4 py-10 text-sm space-y-6">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/brand/kineris-logo-dark.svg" alt="Kineris" className="h-9 w-auto" />
+
+        <TrustIconRow condensed />
+
         <p className="text-ink font-medium">
           For laboratory research use only. Not for human or veterinary use.
         </p>

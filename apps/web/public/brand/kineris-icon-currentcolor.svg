@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <path d="M100,6 C128,20 134,36 128,54 C123,70 112,84 100,94 C88,84 77,70 72,54 C66,36 72,20 100,6 Z" fill="currentColor"/>
+  <path d="M100,6 C128,20 134,36 128,54 C123,70 112,84 100,94 C88,84 77,70 72,54 C66,36 72,20 100,6 Z" fill="currentColor" transform="rotate(120 100 100)"/>
+  <path d="M100,6 C128,20 134,36 128,54 C123,70 112,84 100,94 C88,84 77,70 72,54 C66,36 72,20 100,6 Z" fill="currentColor" transform="rotate(240 100 100)"/>
+</svg>

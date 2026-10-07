@@ -21,11 +21,18 @@ export async function batchRoutes(app: FastifyInstance) {
 
     const parts = req.parts()
     let batchNumber: string | undefined
+    let purity: string | null = null
+    let reportedAt: Date | null = null
     let coaFileUrl: string | null = null
 
     for await (const part of parts) {
       if (part.type === 'field' && part.fieldname === 'batchNumber') {
         batchNumber = String(part.value)
+      } else if (part.type === 'field' && part.fieldname === 'purity') {
+        purity = String(part.value) || null
+      } else if (part.type === 'field' && part.fieldname === 'reportedAt') {
+        const value = String(part.value)
+        reportedAt = value ? new Date(value) : null
       } else if (part.type === 'file' && part.fieldname === 'coaFile') {
         await mkdir(UPLOAD_DIR, { recursive: true })
         const filename = `${randomUUID()}.pdf`
@@ -40,7 +47,7 @@ export async function batchRoutes(app: FastifyInstance) {
     const batch = await prisma.$transaction(async (tx) => {
       await tx.batch.updateMany({ where: { productId }, data: { isCurrent: false } })
       return tx.batch.create({
-        data: { productId, batchNumber, coaFileUrl, isCurrent: true },
+        data: { productId, batchNumber, purity, reportedAt, coaFileUrl, isCurrent: true },
       })
     })
 
@@ -64,5 +71,18 @@ export async function batchRoutes(app: FastifyInstance) {
     })
     if (!batch) return reply.code(404).send({ error: 'No batch found with that number.' })
     return batch
+  })
+
+  // Public feed of every current batch, newest-tested-first, for the Quality
+  // page's "Recent CoAs" section. Real stored batches only, never mocked
+  // rows; a batch with no uploaded PDF still appears, just without a
+  // download link.
+  app.get('/api/coas', async () => {
+    const batches = await prisma.batch.findMany({
+      where: { isCurrent: true },
+      include: { product: { select: { name: true, slug: true } } },
+      orderBy: [{ reportedAt: 'desc' }, { createdAt: 'desc' }],
+    })
+    return batches
   })
 }

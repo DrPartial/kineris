@@ -77,7 +77,7 @@ export default function NewProductPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-sm bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"
+          className="rounded-sm bg-accent px-4 py-2 text-sm font-medium text-bone hover:bg-accent-hover disabled:opacity-50"
         >
           Create product
         </button>

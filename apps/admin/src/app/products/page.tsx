@@ -19,7 +19,7 @@ export default function ProductsListPage() {
         <h1 className="text-xl font-semibold text-ink">Products</h1>
         <Link
           href="/products/new"
-          className="rounded-sm bg-accent px-4 py-2 text-sm font-medium text-white no-underline hover:bg-accent-hover"
+          className="rounded-sm bg-accent px-4 py-2 text-sm font-medium text-bone no-underline hover:bg-accent-hover"
         >
           Add product
         </Link>

@@ -1,6 +1,12 @@
-import type { Bundle, Product } from '@kineris/shared'
+import type { Bundle, CoaListing, Product } from '@kineris/shared'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
+
+export interface SiteStats {
+  compoundCount: number
+  avgPurityPercent: number | null
+  dispatchLabel: string
+}
 
 /**
  * Server-side fetchers, used from Server Components. These run in Node, not
@@ -29,5 +35,17 @@ export async function fetchBundles(): Promise<Bundle[]> {
 export async function fetchBundle(slug: string): Promise<Bundle | null> {
   const res = await fetch(`${API_URL}/api/bundles/${slug}`, { cache: 'no-store' })
   if (!res.ok) return null
+  return res.json()
+}
+
+export async function fetchStats(): Promise<SiteStats | null> {
+  const res = await fetch(`${API_URL}/api/stats`, { cache: 'no-store' })
+  if (!res.ok) return null
+  return res.json()
+}
+
+export async function fetchCoas(): Promise<CoaListing[]> {
+  const res = await fetch(`${API_URL}/api/coas`, { cache: 'no-store' })
+  if (!res.ok) return []
   return res.json()
 }

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Kineris full logo lockup — for use on light/Bone backgrounds. Transparent background. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 150">
+  <svg x="8" y="21" width="108" height="108" viewBox="0 0 200 200">
+    <path d="M100,6 C128,20 134,36 128,54 C123,70 112,84 100,94 C88,84 77,70 72,54 C66,36 72,20 100,6 Z" fill="#1C2B24"/>
+    <path d="M100,6 C128,20 134,36 128,54 C123,70 112,84 100,94 C88,84 77,70 72,54 C66,36 72,20 100,6 Z" fill="#1C2B24" transform="rotate(120 100 100)"/>
+    <path d="M100,6 C128,20 134,36 128,54 C123,70 112,84 100,94 C88,84 77,70 72,54 C66,36 72,20 100,6 Z" fill="#1C2B24" transform="rotate(240 100 100)"/>
+  </svg>
+  <text x="152" y="103" font-family="Sora, ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="700" font-size="88" letter-spacing="-1" fill="#1C2B24">kineris</text>
+</svg>
