@@ -1,8 +1,9 @@
 /**
- * Seeds local dev with the placeholder catalogue from packages/shared
- * (NOT Kineris's real products, see catalogue.ts's own doc comment) so
- * every page has something real-looking to render. Safe to re-run: products
- * are upserted by slug.
+ * Seeds local dev with the catalogue from packages/shared (real names, sizes and prices for the
+ * 16 peptides; the lab supplies and all per-product technical data are still placeholders, see
+ * catalogue.ts's own doc comment). Safe to re-run: products are upserted by slug, and existing
+ * rows are never overwritten (`update: {}`), so a database seeded from an older catalogue keeps
+ * its old rows, reset it to pick up catalogue changes.
  */
 import { randomUUID } from 'node:crypto'
 import { copyFile, mkdir } from 'node:fs/promises'
@@ -23,7 +24,7 @@ const SAMPLE_COA_SOURCE = path.resolve(import.meta.dirname, 'fixtures/sample-coa
 const UPLOAD_DIR = path.resolve(import.meta.dirname, '../uploads/coa')
 
 async function main() {
-  console.log(`Seeding ${FULL_CATALOGUE.length} placeholder products...`)
+  console.log(`Seeding ${FULL_CATALOGUE.length} products...`)
 
   for (const [index, entry] of FULL_CATALOGUE.entries()) {
     const category = entry.category === 'lab-supply' ? 'lab_supply' : 'peptide'
@@ -33,7 +34,7 @@ async function main() {
       create: {
         slug: entry.slug,
         name: entry.name,
-        synonyms: [],
+        synonyms: entry.synonyms ?? [],
         category,
         casNumber: category === 'peptide' ? `000000-${String(10 + index).padStart(2, '0')}-0` : null,
         molecularFormula: category === 'peptide' ? PLACEHOLDER_FORMULAS[index % PLACEHOLDER_FORMULAS.length] : null,
@@ -46,7 +47,8 @@ async function main() {
     })
 
     for (const [sizeIndex, size] of entry.sizes.entries()) {
-      const priceMinorUnits = 3500 + index * 150 + sizeIndex * 1200 // placeholder pricing only
+      // Real price when the catalogue has one, placeholder pricing otherwise (lab supplies).
+      const priceMinorUnits = entry.pricesMinorUnits?.[sizeIndex] ?? 3500 + index * 150 + sizeIndex * 1200
       await prisma.productVariant.upsert({
         where: { productId_size: { productId: product.id, size } },
         update: {},

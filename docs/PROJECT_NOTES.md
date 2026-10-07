@@ -214,17 +214,27 @@ built against the imagined one.
 
 ## Product page images (October 2026)
 
-Generated one vial image per SKU (19 images, 16 products) into `apps/web/public/products/`,
-named `<slug>-<size>.webp` (1200x1200, white, square to fit the existing `aspect-square` slots).
-The tooling lives in `tools/product-shots/` (see its README); editing `products.json` and
-re-running regenerates everything.
+One vial image per SKU (19 images, 16 products) in `apps/web/public/products/`, named
+`<slug>-<size>.webp` (1200x1200, white, square to fit the `aspect-square` slots). Tooling lives in
+`tools/product-shots/` (see its README); editing `products.json` and re-running regenerates
+everything, including `apps/web/src/lib/product-images.generated.ts`, the manifest the site reads.
 
 - The glass/cap is an AI-generated (Higgsfield) vial with a blank label; **all label text is
   typeset from the real brand fonts and logo**, never AI-generated, so every SKU is identical in
   layout and spelling.
 - The labels carry no purity claim and no "human" wording, per the compliance rules above.
-- **Not wired into the site yet.** `ProductCard` and the product page still render
-  `ImagePlaceholder`, and the seeded catalogue (`packages/shared/src/catalogue.ts`) is still the
-  old placeholder list: Sermorelin, NAD+, DSIP and Thymosin Alpha-1 are not in it, and several
-  sizes differ. Hooking the images up properly means replacing that catalogue with the real
-  16-product list first.
+- **Wired into the site**: `ProductCard` shows the cheapest size's vial; the product page shows the
+  vial for the *selected* size (shared state via `VariantSelection.tsx`, since the label prints the
+  strength). Anything without a photo (the two lab supplies) falls back to `ImagePlaceholder`, and a
+  size with no matching image also falls back rather than showing another strength's label.
+- **The catalogue is now the real one**: `packages/shared/src/catalogue.ts` holds the 16 peptides
+  with Harvey's real sizes and prices (and synonyms such as "Thymosin Beta-4 acetate"), and
+  `seed.ts` uses those prices. Still placeholder: the two lab supplies (names, sizes, pricing, no
+  photos), and all per-product technical data (CAS, formula, weight, purity, batch numbers).
+- **Existing local databases keep their old rows**, because the seed never overwrites
+  (`update: {}`). To pick up the new catalogue, reset the dev database (`pnpm --filter
+  @kineris/backend exec prisma migrate reset`, which wipes it) and re-seed, otherwise old
+  placeholder products (Hexarelin, GHRP-2, ...) stay listed with no photo.
+- Verified by running the real storefront against a mock of the product API built from the real
+  catalogue (Postgres wasn't available): shop grid, product page, size-switch image swap, the
+  placeholder fallback and a 390px mobile viewport all behaved, with no horizontal overflow.

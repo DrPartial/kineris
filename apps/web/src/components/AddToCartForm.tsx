@@ -5,9 +5,15 @@ import { useState } from 'react'
 import { useCart } from '@/contexts/CartContext'
 import { formatGBP } from '@/lib/money'
 import { BackInStockForm } from './BackInStockForm'
+import { useVariantSelection } from './VariantSelection'
 
 export function AddToCartForm({ variants }: { variants: ProductVariant[] }) {
-  const [selectedId, setSelectedId] = useState(variants[0]?.id)
+  // Controlled by the product page's VariantSelectionProvider (so the image follows the size);
+  // standalone it keeps its own state.
+  const shared = useVariantSelection()
+  const [localId, setLocalId] = useState(variants[0]?.id)
+  const selectedId = shared ? shared.selectedId : localId
+  const setSelectedId = shared ? shared.select : setLocalId
   const { addLine } = useCart()
   const [added, setAdded] = useState(false)
 
