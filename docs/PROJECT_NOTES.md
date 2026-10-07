@@ -211,3 +211,20 @@ built against the imagined one.
   the plain `--screenshot --window-size` CLI flag, which does not reflow text the way a real
   mobile viewport does and produced a misleading "overflow" artifact that cost real time to
   rule out during this pass.
+
+## Product page images (October 2026)
+
+Generated one vial image per SKU (19 images, 16 products) into `apps/web/public/products/`,
+named `<slug>-<size>.webp` (1200x1200, white, square to fit the existing `aspect-square` slots).
+The tooling lives in `tools/product-shots/` (see its README); editing `products.json` and
+re-running regenerates everything.
+
+- The glass/cap is an AI-generated (Higgsfield) vial with a blank label; **all label text is
+  typeset from the real brand fonts and logo**, never AI-generated, so every SKU is identical in
+  layout and spelling.
+- The labels carry no purity claim and no "human" wording, per the compliance rules above.
+- **Not wired into the site yet.** `ProductCard` and the product page still render
+  `ImagePlaceholder`, and the seeded catalogue (`packages/shared/src/catalogue.ts`) is still the
+  old placeholder list: Sermorelin, NAD+, DSIP and Thymosin Alpha-1 are not in it, and several
+  sizes differ. Hooking the images up properly means replacing that catalogue with the real
+  16-product list first.
