@@ -14,12 +14,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params
   const product = await fetchProduct(slug)
   if (!product) return {}
-  const description = [product.casNumber && `CAS ${product.casNumber}`, product.molecularFormula, product.form]
-    .filter(Boolean)
-    .join(' · ')
+  const description =
+    product.description ?? `${product.name}, batch-tested, for laboratory research use only.`
   return {
     title: `${product.name} | Kineris Labs`,
-    description: description || `${product.name}, batch-tested, for laboratory research use only.`,
+    description,
     openGraph: { title: product.name, description },
   }
 }
@@ -55,7 +54,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     '@type': 'Product',
     name: product.name,
     sku: product.slug,
-    description: dataFields.map(([label, value]) => `${label}: ${value}`).join('; '),
+    description: product.description ?? dataFields.map(([label, value]) => `${label}: ${value}`).join('; '),
     offers: {
       '@type': 'Offer',
       priceCurrency: 'GBP',
@@ -80,6 +79,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           {product.synonyms.length > 0 && (
             <p className="mt-1 text-sm text-ink-hint">Also known as: {product.synonyms.join(', ')}</p>
           )}
+          {product.description && <p className="mt-3 text-sm text-ink-muted">{product.description}</p>}
 
           <div className="mt-3 flex items-center gap-3">
             <span className="data-figure text-sm text-ink-muted">from {formatGBP(cheapest)}</span>

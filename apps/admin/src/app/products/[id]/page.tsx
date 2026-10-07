@@ -36,7 +36,9 @@ export default function EditProductPage() {
     load()
   }
 
-  async function saveFields(fields: Partial<Pick<Product, 'name' | 'casNumber' | 'molecularFormula' | 'molecularWeight' | 'form' | 'storageConditions'>>) {
+  async function saveFields(
+    fields: Partial<Pick<Product, 'name' | 'description' | 'casNumber' | 'molecularFormula' | 'molecularWeight' | 'form' | 'storageConditions'>>,
+  ) {
     setIssues(null)
     try {
       await api(`/api/admin/products/${id}`, { method: 'PATCH', body: JSON.stringify(fields) })
@@ -254,9 +256,12 @@ function ProductFieldsForm({
 }: {
   product: Product
   issues: Record<string, string[]> | null
-  onSave: (fields: Partial<Pick<Product, 'name' | 'casNumber' | 'molecularFormula' | 'molecularWeight' | 'form' | 'storageConditions'>>) => void
+  onSave: (
+    fields: Partial<Pick<Product, 'name' | 'description' | 'casNumber' | 'molecularFormula' | 'molecularWeight' | 'form' | 'storageConditions'>>,
+  ) => void
 }) {
   const [name, setName] = useState(product.name)
+  const [description, setDescription] = useState(product.description ?? '')
   const [casNumber, setCasNumber] = useState(product.casNumber ?? '')
   const [molecularFormula, setMolecularFormula] = useState(product.molecularFormula ?? '')
   const [molecularWeight, setMolecularWeight] = useState(product.molecularWeight ?? '')
@@ -267,7 +272,7 @@ function ProductFieldsForm({
     <form
       onSubmit={(e) => {
         e.preventDefault()
-        onSave({ name, casNumber, molecularFormula, molecularWeight, form, storageConditions })
+        onSave({ name, description, casNumber, molecularFormula, molecularWeight, form, storageConditions })
       }}
       className="mt-6 max-w-md space-y-3"
     >
@@ -275,6 +280,18 @@ function ProductFieldsForm({
         <label className="mb-1 block text-xs text-ink-hint">Name</label>
         <input value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-sm border border-border px-2 py-1.5 text-sm" />
         {issues?.name && <p className="mt-1 text-xs text-red-600">Flagged terms: {issues.name.join(', ')}</p>}
+      </div>
+      <div>
+        <label className="mb-1 block text-xs text-ink-hint">Description</label>
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          rows={3}
+          className="w-full rounded-sm border border-border px-2 py-1.5 text-sm"
+        />
+        {issues?.description && (
+          <p className="mt-1 text-xs text-red-600">Flagged terms: {issues.description.join(', ')}</p>
+        )}
       </div>
       <div>
         <label className="mb-1 block text-xs text-ink-hint">CAS number</label>
