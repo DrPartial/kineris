@@ -13,6 +13,7 @@ export interface Product {
   id: string
   slug: string
   name: string
+  description: string | null
   synonyms: string[]
   category: ProductCategory
   casNumber: string | null

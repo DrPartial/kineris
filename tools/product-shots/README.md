@@ -27,6 +27,14 @@ Edit `products.json` (`name` is one string per line, `sub` is the optional line 
 `sizes` makes one image per size) and re-run. The label region coordinates in `build.py`
 (`X0/X1/Y0/Y1`) are measured on this specific plate; if the plate is replaced, re-measure them.
 
+## Keeping it in sync with the catalogue
+
+Image filenames use the catalogue's slug and size (`packages/shared/src/catalogue.ts`), so
+`products.json` must list the same slugs and sizes. `pnpm --filter @kineris/web test` checks both
+directions (every catalogue size has an image, every image has a catalogue entry) and fails if they
+drift. `name` and `sub` in `products.json` are the label wording only, they can differ from the
+catalogue's longer display names.
+
 ## Label rules
 
 - No purity or "99%" claims on the label: the site only states what a batch CoA backs up.

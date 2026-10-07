@@ -7,6 +7,7 @@ import { requireAdmin } from '../lib/requireAuth.ts'
 const productWrite = z.object({
   slug: z.string().min(1),
   name: z.string().min(1),
+  description: z.string().nullable().optional(),
   synonyms: z.array(z.string()).default([]),
   category: z.enum(['peptide', 'lab_supply']),
   casNumber: z.string().nullable().optional(),
@@ -29,6 +30,7 @@ function complianceIssues(input: Partial<z.infer<typeof productWrite>>): Record<
   const issues: Record<string, string[]> = {}
   const fields: [string, string | null | undefined][] = [
     ['name', input.name],
+    ['description', input.description],
     ['synonyms', input.synonyms?.join(' ')],
     ['form', input.form],
     ['storageConditions', input.storageConditions],

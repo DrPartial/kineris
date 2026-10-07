@@ -1,9 +1,10 @@
 /**
- * Seeds local dev with the catalogue from packages/shared (real names, sizes and prices for the
- * 16 peptides; the lab supplies and all per-product technical data are still placeholders, see
- * catalogue.ts's own doc comment). Safe to re-run: products are upserted by slug, and existing
- * rows are never overwritten (`update: {}`), so a database seeded from an older catalogue keeps
- * its old rows, reset it to pick up catalogue changes.
+ * Seeds local dev with Kineris's real 16-product launch range from
+ * packages/shared/src/catalogue.ts (this and only this, confirmed by
+ * Harvey). Safe to re-run: products are upserted by slug, and anything in
+ * the database that isn't in that range is pruned first, along with its
+ * dependent test orders, so a stray product from an earlier placeholder
+ * pass never lingers.
  */
 import { randomUUID } from 'node:crypto'
 import { copyFile, mkdir } from 'node:fs/promises'
@@ -14,49 +15,79 @@ import { hashPassword } from '../src/lib/auth.ts'
 
 const prisma = new PrismaClient()
 
-// Deterministic-looking but clearly fake placeholder technical data, cycled
-// per product so the UI doesn't show the exact same numbers on every page.
-const PLACEHOLDER_FORMULAS = ['C12H20N4O3S', 'C9H14N2O4', 'C21H32N6O4S', 'C14H22N4O6']
-const PLACEHOLDER_WEIGHTS = ['312.4 g/mol', '214.2 g/mol', '480.6 g/mol', '358.1 g/mol']
-const PLACEHOLDER_PURITIES = ['98.4%', '99.1%', '97.9%', '98.8%']
-
 const SAMPLE_COA_SOURCE = path.resolve(import.meta.dirname, 'fixtures/sample-coa.pdf')
 const UPLOAD_DIR = path.resolve(import.meta.dirname, '../uploads/coa')
 
 async function main() {
-  console.log(`Seeding ${FULL_CATALOGUE.length} products...`)
+  const liveSlugs = FULL_CATALOGUE.map((entry) => entry.slug)
+
+  // Orders/back-in-stock requests referencing a pruned product or a stale
+  // variant size would block the deletes below (no cascade from OrderItem
+  // or the plain-string BackInStockRequest.variantId) -- this is always
+  // dev/seed data, never real customer orders, so it's safe to clear
+  // unconditionally on every reseed rather than track exactly which rows
+  // would conflict.
+  await prisma.order.deleteMany({})
+  await prisma.welcomeSubscriber.deleteMany({})
+  await prisma.discountCode.deleteMany({ where: { autoIssued: true } })
+  await prisma.backInStockRequest.deleteMany({})
+
+  const stale = await prisma.product.findMany({ where: { slug: { notIn: liveSlugs } }, select: { id: true, slug: true } })
+  if (stale.length > 0) {
+    console.log(`Pruning ${stale.length} product(s) no longer in the launch range: ${stale.map((p) => p.slug).join(', ')}`)
+    await prisma.product.deleteMany({ where: { id: { in: stale.map((p) => p.id) } } })
+  }
+
+  console.log(`Seeding ${FULL_CATALOGUE.length} products (Kineris's real launch range)...`)
 
   for (const [index, entry] of FULL_CATALOGUE.entries()) {
-    const category = entry.category === 'lab-supply' ? 'lab_supply' : 'peptide'
     const product = await prisma.product.upsert({
       where: { slug: entry.slug },
-      update: {},
+      update: {
+        name: entry.name,
+        description: entry.description,
+        synonyms: entry.synonyms,
+        // Explicitly nulled, not just omitted: a product carried over from
+        // an earlier placeholder seed could still have a fake CAS/formula/
+        // weight sitting in the database, and upsert's update clause only
+        // touches fields it's given, so leaving these out here would let a
+        // stale fake value survive silently.
+        casNumber: null,
+        molecularFormula: null,
+        molecularWeight: null,
+      },
       create: {
         slug: entry.slug,
         name: entry.name,
-        synonyms: entry.synonyms ?? [],
-        category,
-        casNumber: category === 'peptide' ? `000000-${String(10 + index).padStart(2, '0')}-0` : null,
-        molecularFormula: category === 'peptide' ? PLACEHOLDER_FORMULAS[index % PLACEHOLDER_FORMULAS.length] : null,
-        molecularWeight: category === 'peptide' ? PLACEHOLDER_WEIGHTS[index % PLACEHOLDER_WEIGHTS.length] : null,
-        form: category === 'peptide' ? 'Lyophilised powder' : 'Liquid',
-        storageConditions: category === 'peptide' ? 'Store at -20°C, protect from light' : 'Store at room temperature',
+        description: entry.description,
+        synonyms: entry.synonyms,
+        category: 'peptide',
+        // CAS number / molecular formula / molecular weight deliberately
+        // left unset -- see catalogue.ts's own doc comment on why these
+        // need real supplier/CoA data, not a guess.
+        form: 'Lyophilised powder',
+        storageConditions: 'Store at -20°C, protect from light',
         published: true,
         lowStockThreshold: 5,
       },
     })
 
-    for (const [sizeIndex, size] of entry.sizes.entries()) {
-      // Real price when the catalogue has one, placeholder pricing otherwise (lab supplies).
-      const priceMinorUnits = entry.pricesMinorUnits?.[sizeIndex] ?? 3500 + index * 150 + sizeIndex * 1200
+    // A product kept across catalogue updates can still carry stale sizes
+    // from an earlier pass (e.g. Epitalon used to list 50mg; the real range
+    // only has 10mg) -- upsert alone never removes those, so they're pruned
+    // explicitly first.
+    const liveSizes = entry.variants.map((v) => v.size)
+    await prisma.productVariant.deleteMany({ where: { productId: product.id, size: { notIn: liveSizes } } })
+
+    for (const variant of entry.variants) {
       await prisma.productVariant.upsert({
-        where: { productId_size: { productId: product.id, size } },
-        update: {},
+        where: { productId_size: { productId: product.id, size: variant.size } },
+        update: { priceMinorUnits: variant.priceMinorUnits },
         create: {
           productId: product.id,
-          size,
-          priceMinorUnits,
-          purity: category === 'peptide' ? '≥98% (HPLC)' : null,
+          size: variant.size,
+          priceMinorUnits: variant.priceMinorUnits,
+          purity: '≥98% (HPLC)',
           stock: 25,
         },
       })
@@ -81,7 +112,7 @@ async function main() {
         data: {
           productId: product.id,
           batchNumber: `KL-2026-${String(index + 1).padStart(3, '0')}`,
-          purity: category === 'peptide' ? PLACEHOLDER_PURITIES[index % PLACEHOLDER_PURITIES.length] : null,
+          purity: '98.4%',
           reportedAt: new Date(Date.now() - (index + 1) * 3 * 24 * 60 * 60 * 1000),
           coaFileUrl,
           isCurrent: true,
