@@ -2,8 +2,10 @@ import { SHIPPING_OPTIONS } from '@kineris/shared'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 import { z } from 'zod'
 import { CUSTOMER_COOKIE } from '../lib/auth.ts'
+import { DISCOUNT_FAILURE_MESSAGES, validateDiscountCode } from '../lib/discountValidation.ts'
 import { prisma } from '../lib/prisma.ts'
 import { requireAdmin } from '../lib/requireAuth.ts'
+import { royalMailTrackingUrl } from '../lib/tracking.ts'
 
 /**
  * Checkout supports guest and signed-in customers (pack section 8). Unlike
@@ -91,14 +93,17 @@ export async function orderRoutes(app: FastifyInstance) {
           })
         }
 
+        // A provided code that fails validation rejects the whole order
+        // (specific reason), rather than the old behaviour of silently
+        // applying zero discount for a bad code -- the customer would
+        // otherwise be charged full price without ever being told why.
         let discountMinorUnits = 0
+        let validatedDiscountCodeId: string | null = null
         if (input.discountCode) {
-          const code = await tx.discountCode.findUnique({ where: { code: input.discountCode } })
-          if (code?.active) {
-            discountMinorUnits = code.percentOff
-              ? Math.round((subtotal * code.percentOff) / 100)
-              : (code.amountOffMinorUnits ?? 0)
-          }
+          const result = await validateDiscountCode(input.discountCode.toUpperCase(), subtotal, input.customerEmail)
+          if (!result.valid) throw new OrderError(422, DISCOUNT_FAILURE_MESSAGES[result.reason])
+          discountMinorUnits = result.discountAmountMinorUnits
+          validatedDiscountCodeId = result.discountCodeId
         }
 
         const totalMinorUnits = Math.max(0, subtotal - discountMinorUnits) + shipping.priceMinorUnits
@@ -121,6 +126,17 @@ export async function orderRoutes(app: FastifyInstance) {
                 acceptedAt: now,
               },
             },
+            ...(validatedDiscountCodeId
+              ? {
+                  discountRedemption: {
+                    create: {
+                      discountCodeId: validatedDiscountCodeId,
+                      customerEmail: input.customerEmail,
+                      discountAmountMinorUnits: discountMinorUnits,
+                    },
+                  },
+                }
+              : {}),
           },
           include: { items: true, declaration: true },
         })
@@ -146,18 +162,42 @@ export async function orderRoutes(app: FastifyInstance) {
     const { id } = req.params as { id: string }
     const order = await prisma.order.findUnique({
       where: { id },
-      include: { items: { include: { variant: { include: { product: true } } } }, declaration: true },
+      include: { items: { include: { variant: { include: { product: true } }, batch: true } }, declaration: true },
     })
     if (!order) return reply.code(404).send({ error: 'Order not found.' })
-    return order
+    return { ...order, trackingUrl: order.trackingNumber ? royalMailTrackingUrl(order.trackingNumber) : null }
+  })
+
+  // Guest order-status lookup: both order id and email must match, so this
+  // can't be used to enumerate orders by id alone. Rate-limited in
+  // server.ts, same as the welcome-signup and discount-validate endpoints.
+  const orderStatusSchema = z.object({ orderId: z.string().min(1), email: z.string().email() })
+
+  app.get('/api/order-status', { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } }, async (req, reply) => {
+    const parsed = orderStatusSchema.safeParse(req.query)
+    if (!parsed.success) return reply.code(400).send({ error: 'orderId and email are required.' })
+
+    const order = await prisma.order.findUnique({
+      where: { id: parsed.data.orderId },
+      include: { items: { include: { variant: { include: { product: true } }, batch: true } } },
+    })
+    if (!order || order.customerEmail.toLowerCase() !== parsed.data.email.toLowerCase()) {
+      return reply.code(404).send({ error: 'No order found for that order number and email.' })
+    }
+
+    return {
+      ...order,
+      trackingUrl: order.trackingNumber ? royalMailTrackingUrl(order.trackingNumber) : null,
+    }
   })
 
   app.get('/api/admin/orders', async (req, reply) => {
     if (!(await requireAdmin(req, reply))) return
-    return prisma.order.findMany({
+    const orders = await prisma.order.findMany({
       include: { items: { include: { variant: { include: { product: true } }, batch: true } }, declaration: true },
       orderBy: { createdAt: 'desc' },
     })
+    return orders.map((o) => ({ ...o, trackingUrl: o.trackingNumber ? royalMailTrackingUrl(o.trackingNumber) : null }))
   })
 
   const shipSchema = z.object({ trackingNumber: z.string().min(1) })
@@ -178,7 +218,19 @@ export async function orderRoutes(app: FastifyInstance) {
     // (section 5), this is the point that would call it.
     app.log.info({ orderId: order.id }, 'dispatch email would send here')
 
-    return order
+    return { ...order, trackingUrl: royalMailTrackingUrl(order.trackingNumber ?? '') }
+  })
+
+  app.patch('/api/admin/orders/:id/deliver', async (req, reply) => {
+    if (!(await requireAdmin(req, reply))) return
+    const { id } = req.params as { id: string }
+    return prisma.order.update({ where: { id }, data: { status: 'delivered' } })
+  })
+
+  app.patch('/api/admin/orders/:id/refund', async (req, reply) => {
+    if (!(await requireAdmin(req, reply))) return
+    const { id } = req.params as { id: string }
+    return prisma.order.update({ where: { id }, data: { status: 'refunded' } })
   })
 }
 

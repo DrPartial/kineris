@@ -27,181 +27,266 @@ enum ProductCategory {
   lab_supply
 }
 
+// "Processing"/"Pending payment" are deliberately not separate states: with
+// no real Stripe webhook wired up, there's no event that would ever move an
+// order into a "payment confirmed" state, so adding one would be a fake,
+// unreachable status. Delivered and refunded are real, admin-settable
+// actions, so they're kept.
 enum OrderStatus {
   pending
-  paid
   shipped
+  delivered
   cancelled
+  refunded
 }
 
 model Product {
-  id                 String           @id @default(cuid())
-  slug               String           @unique
-  name               String
-  synonyms           String[]         @default([])
-  category           ProductCategory
-  casNumber          String?
-  molecularFormula   String?
-  molecularWeight    String?
-  form               String?
-  storageConditions  String?
-  published          Boolean          @default(false)
-  lowStockThreshold  Int              @default(5)
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
+  id                String          @id @default(cuid())
+  slug              String          @unique
+  name              String
+  synonyms          String[]        @default([])
+  category          ProductCategory
+  casNumber         String?
+  molecularFormula  String?
+  molecularWeight   String?
+  form              String?
+  storageConditions String?
+  published         Boolean         @default(false)
+  lowStockThreshold Int             @default(5)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 
-  variants           ProductVariant[]
-  batches            Batch[]
+  variants ProductVariant[]
+  batches  Batch[]
 }
 
 model ProductVariant {
-  id                String        @id @default(cuid())
-  productId         String
-  product           Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
-  size              String
-  priceMinorUnits   Int
-  purity            String?
-  stock             Int           @default(0)
-  createdAt         DateTime      @default(now())
+  id              String   @id @default(cuid())
+  productId       String
+  product         Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  size            String
+  priceMinorUnits Int
+  purity          String?
+  stock           Int      @default(0)
+  createdAt       DateTime @default(now())
 
-  bundleComponents  BundleComponent[]
-  orderItems        OrderItem[]
+  bundleComponents BundleComponent[]
+  orderItems       OrderItem[]
 
   @@unique([productId, size])
 }
 
 model Batch {
-  id            String    @id @default(cuid())
-  productId     String
-  product       Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
-  batchNumber   String
-  coaFileUrl    String?
-  isCurrent     Boolean   @default(false)
-  createdAt     DateTime  @default(now())
+  id          String    @id @default(cuid())
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  batchNumber String
+  coaFileUrl  String?
+  // Purity and the date a batch was actually tested vary per batch, not per
+  // product or variant, so they live here rather than on ProductVariant.
+  purity      String?
+  reportedAt  DateTime?
+  isCurrent   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
 
-  orderItems    OrderItem[]
+  orderItems OrderItem[]
 
   @@unique([productId, batchNumber])
 }
 
 model Bundle {
-  id          String             @id @default(cuid())
-  slug        String             @unique
-  name        String
-  published   Boolean            @default(false)
-  createdAt   DateTime           @default(now())
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  published Boolean  @default(false)
+  createdAt DateTime @default(now())
 
-  components  BundleComponent[]
+  components BundleComponent[]
 }
 
 // Bundles draw down the single vials they contain, never their own stock
 // counter (pack 5): this table is the recipe, not inventory.
 model BundleComponent {
-  id          String          @id @default(cuid())
-  bundleId    String
-  bundle      Bundle          @relation(fields: [bundleId], references: [id], onDelete: Cascade)
-  variantId   String
-  variant     ProductVariant  @relation(fields: [variantId], references: [id])
-  quantity    Int             @default(1)
+  id        String         @id @default(cuid())
+  bundleId  String
+  bundle    Bundle         @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+  quantity  Int            @default(1)
 
   @@unique([bundleId, variantId])
 }
 
 model Customer {
-  id            String             @id @default(cuid())
-  email         String             @unique
-  passwordHash  String
-  createdAt     DateTime           @default(now())
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
 
-  sessions      CustomerSession[]
-  orders        Order[]
+  sessions CustomerSession[]
+  orders   Order[]
 }
 
 model CustomerSession {
-  id          String    @id @default(cuid())
-  customerId  String
-  customer    Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  expiresAt   DateTime
-  createdAt   DateTime  @default(now())
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
 }
 
 model AdminUser {
-  id            String          @id @default(cuid())
-  email         String          @unique
-  passwordHash  String
-  createdAt     DateTime        @default(now())
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
 
-  sessions      AdminSession[]
+  sessions AdminSession[]
 }
 
 model AdminSession {
-  id          String     @id @default(cuid())
-  adminId     String
-  admin       AdminUser  @relation(fields: [adminId], references: [id], onDelete: Cascade)
-  expiresAt   DateTime
-  createdAt   DateTime   @default(now())
+  id        String    @id @default(cuid())
+  adminId   String
+  admin     AdminUser @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
 }
 
 model Order {
-  id                  String       @id @default(cuid())
-  customerId          String?
-  customer            Customer?    @relation(fields: [customerId], references: [id])
-  customerEmail       String
-  status              OrderStatus  @default(pending)
-  shippingOptionId    String
-  discountCode        String?
-  totalMinorUnits     Int
-  trackingNumber      String?
-  createdAt           DateTime     @default(now())
-  updatedAt           DateTime     @updatedAt
+  id               String      @id @default(cuid())
+  customerId       String?
+  customer         Customer?   @relation(fields: [customerId], references: [id])
+  customerEmail    String
+  status           OrderStatus @default(pending)
+  shippingOptionId String
+  discountCode     String?
+  totalMinorUnits  Int
+  trackingNumber   String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
 
-  items               OrderItem[]
-  declaration         RuoDeclaration?
+  items              OrderItem[]
+  declaration        RuoDeclaration?
+  discountRedemption DiscountRedemption?
 }
 
 model OrderItem {
-  id                    String          @id @default(cuid())
-  orderId               String
-  order                 Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  variantId             String
-  variant               ProductVariant  @relation(fields: [variantId], references: [id])
-  batchId               String
-  batch                 Batch           @relation(fields: [batchId], references: [id])
-  quantity              Int
-  unitPriceMinorUnits   Int
+  id                  String         @id @default(cuid())
+  orderId             String
+  order               Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variantId           String
+  variant             ProductVariant @relation(fields: [variantId], references: [id])
+  batchId             String
+  batch               Batch          @relation(fields: [batchId], references: [id])
+  quantity            Int
+  unitPriceMinorUnits Int
 }
 
 // One-to-one with Order. Stores the exact declaration text alongside the
 // timestamp, not just a boolean, since the pack treats this as evidence for
 // a payment processor, not an internal flag.
 model RuoDeclaration {
-  id              String    @id @default(cuid())
-  orderId         String    @unique
-  order           Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  termsText       String
-  ruoText         String
-  termsAccepted   Boolean
-  ruoAccepted     Boolean
-  acceptedAt      DateTime
+  id            String   @id @default(cuid())
+  orderId       String   @unique
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  termsText     String
+  ruoText       String
+  termsAccepted Boolean
+  ruoAccepted   Boolean
+  acceptedAt    DateTime
 }
 
+enum DiscountUsageLimitType {
+  unlimited
+  single_use_per_customer
+  total_redemption_cap
+}
+
+enum DiscountValidityType {
+  ongoing
+  fixed_duration
+  date_range
+}
+
+enum DiscountStatus {
+  scheduled
+  active
+  paused
+  ended
+}
+
+enum DiscountStacking {
+  allow
+  disallow
+}
+
+// Doubles as the "Promotion" collection a Payload-style admin would call it:
+// this already was that concept (code + percent/amount off, wired into
+// checkout) before this pass, just without the usage-limit/validity-window
+// fields a real promotions module needs.
 model DiscountCode {
-  id                     String    @id @default(cuid())
-  code                   String    @unique
-  percentOff             Int?
-  amountOffMinorUnits    Int?
-  active                 Boolean   @default(true)
-  createdAt              DateTime  @default(now())
+  id                          String                 @id @default(cuid())
+  code                        String                 @unique
+  internalDescription         String?
+  percentOff                  Int?
+  amountOffMinorUnits         Int?
+  minimumOrderValueMinorUnits Int?
+  usageLimitType              DiscountUsageLimitType @default(unlimited)
+  totalRedemptionCap          Int?
+  perCustomerLimit            Int                    @default(1)
+  validityType                DiscountValidityType   @default(ongoing)
+  startsAt                    DateTime?
+  endsAt                      DateTime?
+  status                      DiscountStatus         @default(active)
+  // True for codes generated per-signup (e.g. a WELCOME10-XXXXX variant),
+  // false for a hand-shared code like the general WELCOME10.
+  autoIssued                  Boolean                @default(false)
+  stacking                    DiscountStacking       @default(disallow)
+  // Binds a per-subscriber code to exactly one email, so "unique code tied
+  // to that email" doesn't need to rely purely on redemption counting.
+  restrictedToEmail           String?
+  active                      Boolean                @default(true)
+  createdAt                   DateTime               @default(now())
+
+  redemptions        DiscountRedemption[]
+  subscriberIssuedTo WelcomeSubscriber?
+}
+
+// Makes per-customer/total-redemption caps actually enforceable, and gives
+// the admin promotions list a real redemption count instead of a guess.
+model DiscountRedemption {
+  id                       String       @id @default(cuid())
+  discountCodeId           String
+  discountCode             DiscountCode @relation(fields: [discountCodeId], references: [id], onDelete: Cascade)
+  orderId                  String       @unique
+  order                    Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  customerEmail            String
+  discountAmountMinorUnits Int
+  redeemedAt               DateTime     @default(now())
+}
+
+// The WELCOME10 arrival-modal flow's subscriber record (section 7 of the
+// promotions spec): captures consent and issues that subscriber their own
+// single-use code rather than reusing a publicly-readable static string.
+model WelcomeSubscriber {
+  id               String        @id @default(cuid())
+  email            String        @unique
+  consentMarketing Boolean
+  consentTimestamp DateTime
+  source           String
+  issuedCodeId     String?       @unique
+  issuedCode       DiscountCode? @relation(fields: [issuedCodeId], references: [id])
+  createdAt        DateTime      @default(now())
 }
 
 // Captured per pack section 8's "back in stock" email capture, matched to a
 // variant, not a product, since stock (and "back in stock") is per-size.
 model BackInStockRequest {
-  id          String    @id @default(cuid())
-  variantId   String
-  email       String
-  notified    Boolean   @default(false)
-  createdAt   DateTime  @default(now())
+  id        String   @id @default(cuid())
+  variantId String
+  email     String
+  notified  Boolean  @default(false)
+  createdAt DateTime @default(now())
 
   @@unique([variantId, email])
 }

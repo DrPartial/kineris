@@ -3,8 +3,16 @@ import { z } from 'zod'
 import { CUSTOMER_COOKIE, clearSessionCookie, hashPassword, sessionExpiry, setSessionCookie, verifyPassword } from '../lib/auth.ts'
 import { prisma } from '../lib/prisma.ts'
 import { requireCustomer } from '../lib/requireAuth.ts'
+import { royalMailTrackingUrl } from '../lib/tracking.ts'
 
-const credentials = z.object({ email: z.string().email(), password: z.string().min(8) })
+const credentials = z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
+  // Set when signing up from the order-confirmation page's guest->account
+  // bridge: if it matches that order's own checkoutEmail, the just-placed
+  // guest order is attached to the new account.
+  claimOrderId: z.string().optional(),
+})
 
 /**
  * Email/password only for this pass (project plan): Google and Apple
@@ -21,6 +29,14 @@ export async function authRoutes(app: FastifyInstance) {
 
     const passwordHash = await hashPassword(parsed.data.password)
     const customer = await prisma.customer.create({ data: { email: parsed.data.email, passwordHash } })
+
+    if (parsed.data.claimOrderId) {
+      const order = await prisma.order.findUnique({ where: { id: parsed.data.claimOrderId } })
+      if (order && order.customerId === null && order.customerEmail === customer.email) {
+        await prisma.order.update({ where: { id: order.id }, data: { customerId: customer.id } })
+      }
+    }
+
     const session = await prisma.customerSession.create({
       data: { customerId: customer.id, expiresAt: sessionExpiry() },
     })
@@ -61,10 +77,11 @@ export async function authRoutes(app: FastifyInstance) {
   app.get('/api/account/orders', async (req, reply) => {
     const customerId = await requireCustomer(req, reply)
     if (!customerId) return
-    return prisma.order.findMany({
+    const orders = await prisma.order.findMany({
       where: { customerId },
-      include: { items: { include: { variant: { include: { product: true } } } } },
+      include: { items: { include: { variant: { include: { product: true } }, batch: true } } },
       orderBy: { createdAt: 'desc' },
     })
+    return orders.map((o) => ({ ...o, trackingUrl: o.trackingNumber ? royalMailTrackingUrl(o.trackingNumber) : null }))
   })
 }

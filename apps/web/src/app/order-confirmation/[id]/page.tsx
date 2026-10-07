@@ -1,11 +1,13 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { GuestAccountBridge } from '@/components/GuestAccountBridge'
 import { formatGBP } from '@/lib/money'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
 
 interface OrderDetail {
   id: string
+  customerId: string | null
   totalMinorUnits: number
   customerEmail: string
   trackingNumber: string | null
@@ -46,6 +48,8 @@ export default async function OrderConfirmationPage({ params }: { params: Promis
         <span>Total</span>
         <span className="data-figure">{formatGBP(order.totalMinorUnits)}</span>
       </div>
+
+      {order.customerId === null && <GuestAccountBridge orderId={order.id} email={order.customerEmail} />}
 
       <Link href="/shop" className="mt-8 inline-block text-sm font-medium text-accent hover:text-accent-hover">
         Continue browsing

@@ -27,9 +27,11 @@ export function CookieConsentBanner() {
   if (!visible) return null
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-surface px-4 py-4 shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
+    // bottom-16 on mobile clears MobileNav (fixed, ~56px tall, lg:hidden)
+    // instead of covering it; lg:bottom-0 once the bottom nav is gone.
+    <div className="fixed inset-x-0 bottom-16 z-50 border-t border-border-strong bg-surface px-4 py-4 lg:bottom-0">
       <div className="mx-auto flex max-w-6xl flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-ink-muted">
+        <p className="min-w-0 text-sm text-ink-muted">
           We use essential cookies to run this site, and analytics cookies to understand how it&rsquo;s used. See
           our{' '}
           <a href="/legal/cookies" className="text-accent hover:text-accent-hover">
@@ -40,7 +42,7 @@ export function CookieConsentBanner() {
         <button
           type="button"
           onClick={accept}
-          className="shrink-0 rounded-sm bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover"
+          className="shrink-0 rounded-sm bg-accent px-4 py-2 text-sm font-medium text-bone hover:bg-accent-hover"
         >
           Accept
         </button>

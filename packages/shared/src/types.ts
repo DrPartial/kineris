@@ -41,8 +41,21 @@ export interface Batch {
   productId: string
   batchNumber: string
   coaFileUrl: string | null
+  purity: string | null
+  reportedAt: string | null
   isCurrent: boolean
   createdAt: string
+}
+
+/** A current batch joined with its product's name/slug, for the public CoA feed and lookup. */
+export interface CoaListing {
+  id: string
+  batchNumber: string
+  coaFileUrl: string | null
+  purity: string | null
+  reportedAt: string | null
+  createdAt: string
+  product: { name: string; slug: string }
 }
 
 export interface BundleComponent {
@@ -77,7 +90,10 @@ export interface RuoDeclaration {
   acceptedAt: string
 }
 
-export type OrderStatus = 'pending' | 'paid' | 'shipped' | 'cancelled'
+// Deliberately no "processing"/"paid" state: with no real Stripe webhook
+// wired up, nothing would ever set it, so it would be a fake, unreachable
+// status rather than a real one.
+export type OrderStatus = 'pending' | 'shipped' | 'delivered' | 'cancelled' | 'refunded'
 
 export interface OrderItem {
   variantId: string
@@ -105,6 +121,19 @@ export interface DiscountCode {
   amountOffMinorUnits: number | null
   active: boolean
 }
+
+export type DiscountFailureReason =
+  | 'not_found'
+  | 'inactive'
+  | 'not_started'
+  | 'expired'
+  | 'usage_limit_reached'
+  | 'minimum_order_not_met'
+  | 'restricted_to_different_email'
+
+export type DiscountValidationResult =
+  | { valid: true; discountCodeId: string; discountAmountMinorUnits: number }
+  | { valid: false; reason: DiscountFailureReason; message: string }
 
 /** Placeholder, non-carrier-integrated shipping choices, pack section 6 is OPEN on exact pricing. */
 export interface ShippingOption {

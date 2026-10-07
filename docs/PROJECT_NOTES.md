@@ -100,3 +100,114 @@ the admin URL.
   are ticked), order confirmation, account sign-up/sign-in/order history, the Quality page's batch
   lookup, and the admin dashboard/products/orders/discount-codes/bundles screens, all exercised
   against the seeded placeholder catalogue.
+
+## Trust/CoA rebuild pass (October 2026)
+
+Prompted by an AI audit benchmarking the storefront against a US competitor. Rebuilt the
+homepage, product page, and Quality/CoA page around real, computed trust data instead of
+invented claims, and closed the old CoA "available on request" dead end. Specifics:
+
+- `Batch` gained `purity` and `reportedAt` fields (per-batch, not per-product), via migration
+  `20261007175157_add_batch_coa_fields`. The admin batch-upload form now has inputs for both.
+- New public endpoints: `GET /api/coas` (every current batch, for the Quality page's "Recent
+  CoAs" feed) and `GET /api/stats` (compound count, average purity, fastest dispatch label, all
+  computed live from the database/shared config, never hardcoded; a stat is simply omitted from
+  the homepage if there's no real data behind it yet).
+- **`apps/backend/prisma/fixtures/sample-coa.pdf`** is a dev-only fixture: a hand-built PDF
+  watermarked "SAMPLE CERTIFICATE OF ANALYSIS, PLACEHOLDER, NOT A REAL LABORATORY RESULT,"
+  attached by the seed script to exactly one product's batch so the fully-populated CoA card UI
+  is visible locally. **Delete this fixture and stop seeding it before any production deploy**,
+  every other batch correctly shows the honest "CoA pending" state instead.
+- Trust-bar and badge copy is deliberately restricted to what's true today: "Batch & lot
+  tracked," "Certificate of Analysis per batch," "UK dispatch," "RUO checkout declaration." It
+  does **not** claim "Independent Lab Verified" or name a testing lab, since the pack's own OPEN
+  item (whether CoAs come from an independent lab or the supplier) is still unresolved, and the
+  Quality page's placeholder note about it was kept rather than replaced with an invented
+  methodology section.
+- Deferred to a follow-up (per Harvey's own scope call, not built in this pass): QR-code batch
+  verification labels, a solution-concentration calculator, a downloadable per-product "Research
+  Packet" PDF, and a bundle comparison table. The `/quality?batch=` deep-link (for a future QR
+  code to point at) and a "tested N days ago" freshness line on every CoA card were built now,
+  since both were cheap and needed no new page.
+- No Lighthouse/Core Web Vitals score was run, since no browser automation tool was available in
+  this session. Treat performance/SEO scoring as unverified until someone runs it by hand.
+
+## Brand system applied (October 2026)
+
+Applied the Kineris brand kit (`~/Desktop/kineris-brand-kit`) across both `apps/web` and
+`apps/admin`: palette (Pine Ink/Bone/Jade/Ember/Sage Mist/Stone), Sora (headings) + Manrope
+(body) via `next/font/google`, the three-petal logo, and the 8/12/20px flat shape language.
+
+- Both apps' `globals.css` define the raw palette plus the same semantic token names the
+  codebase already used (`--color-ink`, `--color-accent`, etc.), so every component that
+  already referenced a token picked up the rebrand automatically, with zero hardcoded hex found
+  anywhere in `apps/*/src` to fix.
+- The footer is the one deliberately dark surface (Harvey's call over the light-footer
+  alternative), Pine Ink background with the reversed logo. Built via a new `.on-dark` class in
+  `globals.css` that flips the ink/border/accent tokens for its descendants, rather than
+  threading a dark-mode prop through `TrustIconRow`.
+- **Caught and fixed two guide violations before they shipped**: the brand guide explicitly bans
+  gradients and drop shadows, but `ImagePlaceholder` had a gradient background and
+  `CookieConsentBanner` had a shadow, both left over from before the brand kit existed, now flat.
+- **Caught and fixed a real contrast failure**: Ember as a text color on a light background is
+  about 2.9:1, below the 4.5:1 the guide itself requires. Fixed by using Ember only as a
+  background fill with Pine Ink text instead (the "Only N remaining" stock badge and the
+  `WELCOME10` code chip), per the guide's own "Bone/Ember/Sage Mist carry Pine Ink text" rule.
+  Every other palette pairing actually used on the site (Jade+Bone text, Pine Ink+Bone, Stone on
+  Bone) passes 4.5:1 or better.
+- Radius tokens (`--radius-sm/md/lg` = 8/12/20px) are remapped once in `@theme`, so every
+  existing `rounded-sm` class sitewide picked up 8px automatically. Card-level containers
+  (`ProductCard`, `COACard`, homepage section cards) and the large `ImagePlaceholder` panels were
+  then individually promoted to `rounded-md`/`rounded-lg` to match the guide's small-control vs.
+  card vs. large-panel distinction; this pass wasn't exhaustive across every one of the ~29 files
+  using `rounded-sm`, just the highest-visual-impact ones.
+- Favicons use Next's file-convention (`app/icon.svg`, `app/apple-icon.png`), auto-wired with no
+  manual `<head>` editing.
+- Incidental fix while verifying the homepage visually: `StatCounter` sized every stat the same
+  large display size, which was fine for "21" and "98%" but made a worded stat ("Next working
+  day") wrap across three lines. It now uses a smaller, non-monospace size for longer values.
+
+## Accounts, order status, checkout equality, and promotions (October 2026)
+
+Harvey pasted a very detailed spec for mobile nav, an account modal, order status/tracking,
+equal-weight checkout options, and a promotions system with a gated WELCOME10 flow. It was
+written against an idealized stack (Payload CMS, Stripe, Google/Apple OAuth, Klaviyo/Resend, a
+block-based A/B page builder) that doesn't exist here. Everything below was translated onto the
+real stack (Fastify + Prisma + Next, no OAuth, no email provider, no block system) rather than
+built against the imagined one.
+
+- **`DiscountCode` was extended in place, not replaced with a parallel "Promotion" model** --
+  it already was that collection (code + percent/amount off, wired into checkout), it just
+  needed usage-limit/validity-window/status fields. New `DiscountRedemption` (makes per-customer
+  and total caps actually enforceable, gives a real redemption count) and `WelcomeSubscriber`
+  (the arrival-modal flow's subscriber record) models sit alongside it.
+- **The WELCOME10 arrival flow issues a real per-subscriber code** (`WELCOME10-XXXXX`, bound to
+  that one email via `restrictedToEmail`), not the old publicly-readable static string -- a code
+  visible in page source can't actually be single-use. The code is never returned over the API,
+  only "we've sent it" -- verified directly against the database during this pass, not just
+  trusted. The general `WELCOME10` code on the homepage CTA still exists for anyone who doesn't
+  want to leave an email, now reached through a button that opens the gated modal rather than
+  shown as plaintext.
+- **A bad discount code now rejects the whole order** (specific reason: not found / inactive /
+  expired / usage limit reached / minimum order not met / restricted to a different email),
+  replacing the old silent fall-through to zero discount, which would have charged full price
+  without ever telling the customer why.
+- **`OrderStatus` deliberately has no "Processing"/"Pending payment" state.** With no real Stripe
+  webhook wired up, nothing would ever set one, so it would be a fake, unreachable status.
+  `delivered` and `refunded` were added instead, since both are real, admin-settable actions.
+- **Google/Apple sign-in render as visibly disabled "(coming soon)" buttons**, present but inert,
+  since no OAuth app registration exists yet. `@fastify/rate-limit` was added (new dependency)
+  and applied only to the three real enumeration/abuse surfaces (order-status lookup,
+  welcome-signup, discount-code validation), not site-wide.
+- **Not built**: a block-based A/B testing page system (no such architecture exists in this
+  project; retrofitting one is a separate, much larger undertaking than this task), real
+  OAuth, and real email sending for the welcome/dispatch flows (both stubbed with a log line,
+  same convention as the existing dispatch-email hook).
+- **A real, if indirect, UI bug was caught and fixed along the way**: the header's right-side
+  icon cluster (search + Account + Cart) no longer fit next to the enlarged logo at narrow
+  mobile widths, and `TrustIconRow`'s flex/grid items had no `min-w-0`, so a long label like
+  "Certificate of Analysis per batch" could refuse to shrink. Both fixed; verified against a
+  real mobile viewport via Chrome DevTools Protocol with proper device-metrics emulation, not
+  the plain `--screenshot --window-size` CLI flag, which does not reflow text the way a real
+  mobile viewport does and produced a misleading "overflow" artifact that cost real time to
+  rule out during this pass.

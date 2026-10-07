@@ -4,6 +4,9 @@
  * every page has something real-looking to render. Safe to re-run: products
  * are upserted by slug.
  */
+import { randomUUID } from 'node:crypto'
+import { copyFile, mkdir } from 'node:fs/promises'
+import path from 'node:path'
 import { FULL_CATALOGUE } from '@kineris/shared'
 import { PrismaClient } from '@prisma/client'
 import { hashPassword } from '../src/lib/auth.ts'
@@ -14,6 +17,10 @@ const prisma = new PrismaClient()
 // per product so the UI doesn't show the exact same numbers on every page.
 const PLACEHOLDER_FORMULAS = ['C12H20N4O3S', 'C9H14N2O4', 'C21H32N6O4S', 'C14H22N4O6']
 const PLACEHOLDER_WEIGHTS = ['312.4 g/mol', '214.2 g/mol', '480.6 g/mol', '358.1 g/mol']
+const PLACEHOLDER_PURITIES = ['98.4%', '99.1%', '97.9%', '98.8%']
+
+const SAMPLE_COA_SOURCE = path.resolve(import.meta.dirname, 'fixtures/sample-coa.pdf')
+const UPLOAD_DIR = path.resolve(import.meta.dirname, '../uploads/coa')
 
 async function main() {
   console.log(`Seeding ${FULL_CATALOGUE.length} placeholder products...`)
@@ -55,11 +62,26 @@ async function main() {
 
     const hasCurrentBatch = await prisma.batch.findFirst({ where: { productId: product.id, isCurrent: true } })
     if (!hasCurrentBatch) {
+      // Only the very first product gets the watermarked sample CoA PDF
+      // attached, purely so the fully-populated CoA card UI is visible in
+      // local dev -- every other batch is honestly CoA-pending, matching
+      // where a real launch actually starts (pack 2.5 is OPEN on the testing
+      // lab; see docs/PROJECT_NOTES.md).
+      let coaFileUrl: string | null = null
+      if (index === 0) {
+        await mkdir(UPLOAD_DIR, { recursive: true })
+        const filename = `${randomUUID()}.pdf`
+        await copyFile(SAMPLE_COA_SOURCE, path.join(UPLOAD_DIR, filename))
+        coaFileUrl = `/uploads/coa/${filename}`
+      }
+
       await prisma.batch.create({
         data: {
           productId: product.id,
           batchNumber: `KL-2026-${String(index + 1).padStart(3, '0')}`,
-          coaFileUrl: null, // real CoA PDFs come later, pack 2.5 is OPEN on the testing lab
+          purity: category === 'peptide' ? PLACEHOLDER_PURITIES[index % PLACEHOLDER_PURITIES.length] : null,
+          reportedAt: new Date(Date.now() - (index + 1) * 3 * 24 * 60 * 60 * 1000),
+          coaFileUrl,
           isCurrent: true,
         },
       })
@@ -77,7 +99,24 @@ async function main() {
 
   const discountCode = await prisma.discountCode.findUnique({ where: { code: 'WELCOME10' } })
   if (!discountCode) {
-    await prisma.discountCode.create({ data: { code: 'WELCOME10', percentOff: 10, active: true } })
+    // The general, publicly-readable code (unlike the per-subscriber
+    // WELCOME10-XXXXX variants the welcome-modal flow issues, see
+    // src/routes/welcome.ts) -- kept distinct and documented in
+    // docs/PROJECT_NOTES.md.
+    await prisma.discountCode.create({
+      data: {
+        code: 'WELCOME10',
+        internalDescription: 'General first-order code, read off the homepage CTA.',
+        percentOff: 10,
+        active: true,
+        status: 'active',
+        validityType: 'ongoing',
+        usageLimitType: 'unlimited',
+        perCustomerLimit: 1,
+        stacking: 'disallow',
+        autoIssued: false,
+      },
+    })
   }
 
   console.log('Seed complete.')

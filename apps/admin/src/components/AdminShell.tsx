@@ -10,7 +10,8 @@ const NAV = [
   { href: '/', label: 'Dashboard' },
   { href: '/products', label: 'Products' },
   { href: '/orders', label: 'Orders' },
-  { href: '/discount-codes', label: 'Discount codes' },
+  { href: '/discount-codes', label: 'Promotions' },
+  { href: '/subscribers', label: 'Subscribers' },
   { href: '/bundles', label: 'Bundles' },
 ]
 
@@ -29,7 +30,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen">
       <aside className="w-56 shrink-0 border-r border-border bg-surface p-4">
-        <p className="mb-6 text-sm font-semibold text-ink">Kineris Admin</p>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/brand/kineris-logo-light.svg" alt="Kineris" className="mb-6 h-10 w-auto" />
         <nav className="space-y-1">
           {NAV.map((item) => (
             <Link

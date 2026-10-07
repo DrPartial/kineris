@@ -11,6 +11,7 @@ interface OrderAdmin {
   status: string
   totalMinorUnits: number
   trackingNumber: string | null
+  trackingUrl: string | null
   createdAt: string
   items: { quantity: number; unitPriceMinorUnits: number; variant: { size: string; product: { name: string } }; batch: { batchNumber: string } }[]
 }
@@ -30,6 +31,16 @@ export default function OrdersPage() {
     const trackingNumber = trackingDrafts[orderId]
     if (!trackingNumber) return
     await api(`/api/admin/orders/${orderId}/ship`, { method: 'PATCH', body: JSON.stringify({ trackingNumber }) })
+    load()
+  }
+
+  async function markDelivered(orderId: string) {
+    await api(`/api/admin/orders/${orderId}/deliver`, { method: 'PATCH' })
+    load()
+  }
+
+  async function markRefunded(orderId: string) {
+    await api(`/api/admin/orders/${orderId}/refund`, { method: 'PATCH' })
     load()
   }
 
@@ -76,8 +87,14 @@ export default function OrdersPage() {
                   </button>
                 </div>
 
-                {order.status !== 'shipped' && (
+                {order.status === 'pending' && (
                   <div className="flex items-end gap-2 print:hidden">
+                    <div>
+                      <label className="mb-1 block text-xs text-ink-hint">Carrier</label>
+                      <select disabled className="w-32 rounded-sm border border-border bg-surface-sunken px-2 py-1.5 text-sm text-ink-muted">
+                        <option>Royal Mail</option>
+                      </select>
+                    </div>
                     <div>
                       <label className="mb-1 block text-xs text-ink-hint">Tracking number</label>
                       <input
@@ -89,14 +106,41 @@ export default function OrdersPage() {
                     <button
                       type="button"
                       onClick={() => markShipped(order.id)}
-                      className="rounded-sm bg-accent px-3 py-1.5 text-sm font-medium text-white hover:bg-accent-hover"
+                      className="rounded-sm bg-accent px-3 py-1.5 text-sm font-medium text-bone hover:bg-accent-hover"
                     >
                       Mark as shipped
                     </button>
                   </div>
                 )}
                 {order.trackingNumber && (
-                  <p className="text-xs text-ink-hint">Tracking: {order.trackingNumber}</p>
+                  <p className="text-xs text-ink-hint">
+                    Royal Mail tracking:{' '}
+                    {order.trackingUrl ? (
+                      <a href={order.trackingUrl} target="_blank" rel="noreferrer" className="data-figure text-accent hover:text-accent-hover">
+                        {order.trackingNumber}
+                      </a>
+                    ) : (
+                      <span className="data-figure">{order.trackingNumber}</span>
+                    )}
+                  </p>
+                )}
+                {order.status === 'shipped' && (
+                  <div className="flex gap-2 print:hidden">
+                    <button
+                      type="button"
+                      onClick={() => markDelivered(order.id)}
+                      className="rounded-sm border border-ink px-3 py-1.5 text-sm text-ink hover:bg-surface-sunken"
+                    >
+                      Mark delivered
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => markRefunded(order.id)}
+                      className="rounded-sm border border-border px-3 py-1.5 text-sm text-ink-muted hover:bg-surface-sunken"
+                    >
+                      Mark refunded
+                    </button>
+                  </div>
                 )}
               </div>
             )}

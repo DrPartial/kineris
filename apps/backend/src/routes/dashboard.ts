@@ -9,7 +9,7 @@ export async function dashboardRoutes(app: FastifyInstance) {
     const [orderCount, customerCount, paidOrders, products] = await Promise.all([
       prisma.order.count(),
       prisma.customer.count(),
-      prisma.order.findMany({ where: { status: { in: ['paid', 'shipped'] } }, select: { totalMinorUnits: true } }),
+      prisma.order.findMany({ where: { status: { in: ['shipped', 'delivered'] } }, select: { totalMinorUnits: true } }),
       prisma.product.findMany({ include: { variants: true } }),
     ])
 

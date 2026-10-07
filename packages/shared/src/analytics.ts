@@ -12,6 +12,16 @@ export const ANALYTICS_EVENTS = {
   beginCheckout: 'begin_checkout',
   purchase: 'purchase',
   signUp: 'sign_up',
+  // Added for the accounts/order-status/checkout/promotions pass -- same
+  // "constant now, no SDK yet" treatment as the five above.
+  promoModalShown: 'promo_modal_shown',
+  promoModalSubmitted: 'promo_modal_submitted',
+  promoCodeApplied: 'promo_code_applied',
+  promoCodeRejected: 'promo_code_rejected',
+  orderStatusLookup: 'order_status_lookup',
+  accountModalOpened: 'account_modal_opened',
+  guestAccountOfferShown: 'guest_account_offer_shown',
+  guestAccountOfferAccepted: 'guest_account_offer_accepted',
 } as const
 
 export type AnalyticsEvent = (typeof ANALYTICS_EVENTS)[keyof typeof ANALYTICS_EVENTS]
