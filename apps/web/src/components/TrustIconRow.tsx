@@ -20,14 +20,23 @@ const DEFAULT_ITEMS = [
 export function TrustIconRow({
   items = DEFAULT_ITEMS,
   condensed = false,
+  centered = false,
 }: {
   items?: { icon: keyof typeof ICONS; label: string }[]
   condensed?: boolean
+  /** Centre the items as an evenly gapped row (full-width strips), instead of four equal grid columns. */
+  centered?: boolean
 }) {
   return (
-    <ul className={`grid gap-4 ${condensed ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-2 sm:grid-cols-4'}`}>
+    <ul
+      className={
+        centered
+          ? 'flex flex-wrap items-center justify-center gap-x-10 gap-y-3'
+          : `grid gap-4 ${condensed ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-2 sm:grid-cols-4'}`
+      }
+    >
       {items.map((item) => (
-        <li key={item.label} className="flex min-w-0 items-center gap-2.5">
+        <li key={item.label} className={`flex items-center gap-2.5 ${centered ? '' : 'min-w-0'}`}>
           <svg
             width={condensed ? 18 : 22}
             height={condensed ? 18 : 22}
