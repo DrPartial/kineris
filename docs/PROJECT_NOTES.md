@@ -263,3 +263,42 @@ everything, including `apps/web/src/lib/product-images.generated.ts`, the manife
 - Verified by running the real storefront against a mock of the product API built from the real
   catalogue (Postgres wasn't available): shop grid, product page, size-switch image swap, the
   placeholder fallback and a 390px mobile viewport all behaved, with no horizontal overflow.
+
+## Home page rebuild (October 2026)
+
+Rebuilt `apps/web/src/app/page.tsx` around cinematic footage generated with Higgsfield from the real
+vial renders. Flow: full-bleed looping hero video (trust strip as a bar along its bottom), big
+evenly aligned stats, the range (8 product cards), a "one vial, one batch, one record" macro
+section, a Certificate-of-Analysis section beside a lab-bench still, the three-step flow, and the
+10% offer card. All copy is the site's existing, already-approved wording (no new claims) and was
+run through `checkCompliance`.
+
+- **Assets** (`apps/web/public/home/`): `hero-1080.mp4` (666 KB) and `hero-720.mp4` (224 KB), an
+  8 s loop (start and end frame identical), plus `hero-poster.webp` (frame 0 of the video, so the
+  still-to-motion hand-off is invisible), `macro.webp` and `lab.webp`.
+- **Hero behaviour** (`components/home/HeroVideo.tsx`): the video is requested only after mount,
+  720p on phones, 1080p otherwise, and not at all for visitors with `prefers-reduced-motion` (they
+  keep the poster). Below `lg` the footage is a band at the top with the text on solid dark under it
+  (overlaying text on the vials was unreadable on phones). The tint over the footage is flat, per
+  the brand kit's no-gradient rule.
+- **Imagery rules kept**: objects only, no people or lifestyle scenes (pack 2.4).
+- **Text in generated scenes is checked, not trusted.** Nano Banana keeps the real labels remarkably
+  well, but tiny print can slip. Every frame used was inspected at 100%: the hero's sharp front vial
+  reads exactly (kineris, LYOPHILISED POWDER, BPC-157, 10 mg, FOR RESEARCH USE ONLY; the second
+  vial is defocused by design). Two generated scenes were **rejected for misspelled micro-text**
+  ("LYOPHILISES", "aestate", "LYOPHILIJSED"): a six-vial range lineup and a pedestal shot. Any new
+  scene needs the same 100% check on every visible label before it ships.
+- **Pipeline note**: this environment's network policy blocks Higgsfield's upload host, so reference
+  images were imported by URL instead (`media_import_url` on the raw GitHub URLs of the product
+  images in this public repo). Output downloads work normally.
+- **Check before launch**: the stat strip is computed live, but two of its inputs are still
+  placeholders. "Avg. purity, current batches" averages the seeded batch purities (placeholder
+  values such as 98.4%), and "Fastest UK dispatch: Next working day, guaranteed by 1pm" comes from the
+  placeholder shipping config (it describes a Royal Mail Special Delivery *delivery* guarantee, not
+  dispatch). Neither should go live until it is backed by real CoA and carrier data.
+- **Verified** against a mock of the product API built from the real catalogue (Postgres wasn't
+  available): desktop 1440, mobile 390, reduced-motion, no horizontal overflow, no console errors.
+  The sandbox's Chromium cannot decode H.264, so playback was proven with a temporary VP9 stand-in
+  (desktop gets the 1080p file, mobile the 720p, time advances); the shipped H.264 files themselves
+  (yuv420p, faststart) were not decoded in a browser here, so give the hero one look in Chrome and
+  Safari.

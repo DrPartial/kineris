@@ -16,7 +16,7 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <Link
       href={`/products/${product.slug}`}
-      className="group block rounded-md border border-border bg-surface p-4 no-underline transition-colors hover:border-accent"
+      className="group flex flex-col rounded-md border border-border bg-surface p-4 no-underline transition-colors hover:border-accent"
     >
       {/* The card is already white and bordered, so the white vial photo needs no frame of its own. */}
       <ProductImage
@@ -34,7 +34,7 @@ export function ProductCard({ product }: { product: Product }) {
           <Badge variant="verified">{purity}</Badge>
         </div>
       )}
-      <div className="mt-2 flex items-center justify-between">
+      <div className="mt-auto flex flex-wrap items-center justify-between gap-x-2 pt-2">
         <span className="data-figure text-sm text-ink">from {formatGBP(cheapest)}</span>
         <span className="text-xs text-ink-hint">{inStock ? 'In stock' : 'Out of stock'}</span>
       </div>
