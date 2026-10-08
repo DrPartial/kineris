@@ -3,6 +3,7 @@
 import type { Product } from '@kineris/shared'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { ProductImage } from '@/components/ProductImage'
 import { useCart } from '@/contexts/CartContext'
 import { api } from '@/lib/api'
 import { formatGBP } from '@/lib/money'
@@ -11,6 +12,7 @@ interface ResolvedVariant {
   variantId: string
   productSlug: string
   productName: string
+  molecularFormula: string | null
   size: string
   priceMinorUnits: number
   stock: number
@@ -24,6 +26,7 @@ function resolveVariants(products: Product[]): Map<string, ResolvedVariant> {
         variantId: v.id,
         productSlug: p.slug,
         productName: p.name,
+        molecularFormula: p.molecularFormula,
         size: v.size,
         priceMinorUnits: v.priceMinorUnits,
         stock: v.stock,
@@ -70,11 +73,22 @@ export default function CartPage() {
       <ul className="mt-6 divide-y divide-border">
         {resolvedLines.map(({ line, variant }) => (
           <li key={line.variantId} className="flex items-center justify-between gap-4 py-4">
-            <div>
-              <Link href={`/products/${variant.productSlug}`} className="text-sm font-medium text-ink no-underline hover:text-accent">
-                {variant.productName}
-              </Link>
-              <p className="text-xs text-ink-hint">{variant.size}</p>
+            <div className="flex items-center gap-4">
+              <ProductImage
+                slug={variant.productSlug}
+                name={variant.productName}
+                size={variant.size}
+                formula={variant.molecularFormula}
+                bordered
+                sizes="64px"
+                className="h-16 w-16 shrink-0"
+              />
+              <div>
+                <Link href={`/products/${variant.productSlug}`} className="text-sm font-medium text-ink no-underline hover:text-accent">
+                  {variant.productName}
+                </Link>
+                <p className="text-xs text-ink-hint">{variant.size}</p>
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <input

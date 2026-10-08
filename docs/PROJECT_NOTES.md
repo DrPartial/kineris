@@ -319,3 +319,26 @@ of `api()`: the `Content-Type` header is now only set when `init.body` is actual
 five call sites were re-verified live (sign-out through a real browser click via CDP for both the
 storefront and admin app; the other three via a direct request matching the fixed client's
 headers), not just assumed fixed because the code looked right.
+
+## Cart count and cart images (October 2026)
+
+Two issues reported together: the header kept showing "Cart (1)" with nothing in the actual cart,
+and cart lines had no product image.
+
+- **Root cause of the count bug**: `CartContext` persists raw `{variantId, quantity}` lines to
+  localStorage with no server-side validation, ever. The cart *page* already resolved lines
+  against real fetched products and silently dropped anything that didn't match (left over from a
+  deleted product or an old catalogue swap), but the header's count was computed straight from the
+  raw localStorage lines, with no such check -- so a stale line from before the real-catalogue
+  cutover kept counting in the header forever while the cart page correctly showed empty.
+- **Fix**: `CartContext` now fetches the real product list once after hydration and prunes any
+  line whose variant no longer exists, persisting the cleaned-up cart back to localStorage. Every
+  reader of `lines` (header, bottom nav, cart page, checkout) now agrees on the same real count,
+  instead of the cart page being the only place that got it right. A failed fetch never wipes the
+  cart, it only prunes on a confirmed product list.
+- **Cart images**: `apps/web/src/app/cart/page.tsx` now renders each line's `ProductImage` (the
+  same component the shop grid and product page already use), falling back to the branded
+  placeholder for anything without photography.
+- Verified live: injected a stale variant id into localStorage via Chrome DevTools Protocol,
+  confirmed the header showed the correct count after the prune and the bad entry was gone from
+  localStorage; added a real item through the UI and confirmed its photo renders on the cart page.
