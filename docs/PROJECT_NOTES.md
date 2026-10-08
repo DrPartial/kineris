@@ -342,3 +342,24 @@ and cart lines had no product image.
 - Verified live: injected a stale variant id into localStorage via Chrome DevTools Protocol,
   confirmed the header showed the correct count after the prune and the bad entry was gone from
   localStorage; added a real item through the UI and confirmed its photo renders on the cart page.
+
+## Cart drawer (October 2026)
+
+The cart is now a right-side slide-out drawer (`CartDrawer.tsx`), the primary way to view/edit it
+without leaving the page. The `/cart` page still exists, unchanged, as a real linkable route (the
+drawer's "View full cart" link points there) for anyone who wants it full-screen or lands on it
+directly.
+
+- Opens from the header's Cart button, and automatically after "Add to cart" on both a product
+  page and a bundle page, so adding something actually shows you it landed, not just a button
+  label flipping to "Added to cart."
+- `Modal.tsx` (the shared overlay primitive already used by the nav drawer, search, account, and
+  welcome modal) gained a real slide/fade transition instead of popping in and out instantly: it
+  stays mounted for 300ms after closing so it can animate out, entering from off-screen on the
+  next frame rather than skipping straight to the open state. Centred modals fade and scale
+  slightly instead of sliding, since they're not anchored to a screen edge. This benefits every
+  overlay in the app, not just the new cart drawer.
+- Verified live via Chrome DevTools Protocol: the dialog is still in the DOM 100ms into closing
+  (genuinely animating, not vanishing) and gone by 400ms; opening via both the header button and
+  the auto-open-on-add path both work; the drawer shows the real product image, quantity control,
+  remove, subtotal, and links to checkout and the full cart page.

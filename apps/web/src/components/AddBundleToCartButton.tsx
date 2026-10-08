@@ -3,6 +3,7 @@
 import type { Bundle } from '@kineris/shared'
 import { useState } from 'react'
 import { useCart } from '@/contexts/CartContext'
+import { useOverlay } from '@/contexts/OverlayContext'
 
 /**
  * The cart has no concept of a bundle line item, only variant lines (see
@@ -12,6 +13,7 @@ import { useCart } from '@/contexts/CartContext'
  */
 export function AddBundleToCartButton({ bundle }: { bundle: Bundle }) {
   const { addLine } = useCart()
+  const { setOpenOverlay } = useOverlay()
   const [added, setAdded] = useState(false)
   const inStock = bundle.availableCount > 0
 
@@ -25,6 +27,7 @@ export function AddBundleToCartButton({ bundle }: { bundle: Bundle }) {
       onClick={() => {
         for (const c of bundle.components) addLine(c.variantId, c.quantity)
         setAdded(true)
+        setOpenOverlay('cart')
       }}
       className="w-full rounded-sm bg-accent px-5 py-3 text-sm font-medium text-bone hover:bg-accent-hover sm:w-auto"
     >
