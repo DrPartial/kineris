@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Manrope, Sora } from 'next/font/google'
 import { AccountModal } from '@/components/AccountModal'
+import { CartDrawer } from '@/components/CartDrawer'
 import { CookieConsentBanner } from '@/components/CookieConsentBanner'
 import { MobileNav } from '@/components/MobileNav'
 import { NavDrawer } from '@/components/NavDrawer'
@@ -40,6 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <SearchModal />
               <AccountModal />
               <WelcomeModal />
+              <CartDrawer />
             </OverlayProvider>
           </CartProvider>
         </CustomerAuthProvider>

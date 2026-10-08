@@ -3,6 +3,7 @@
 import type { ProductVariant } from '@kineris/shared'
 import { useState } from 'react'
 import { useCart } from '@/contexts/CartContext'
+import { useOverlay } from '@/contexts/OverlayContext'
 import { formatGBP } from '@/lib/money'
 import { BackInStockForm } from './BackInStockForm'
 import { useVariantSelection } from './VariantSelection'
@@ -15,6 +16,7 @@ export function AddToCartForm({ variants }: { variants: ProductVariant[] }) {
   const selectedId = shared ? shared.selectedId : localId
   const setSelectedId = shared ? shared.select : setLocalId
   const { addLine } = useCart()
+  const { setOpenOverlay } = useOverlay()
   const [added, setAdded] = useState(false)
 
   const selected = variants.find((v) => v.id === selectedId) ?? variants[0]
@@ -61,6 +63,7 @@ export function AddToCartForm({ variants }: { variants: ProductVariant[] }) {
           onClick={() => {
             addLine(selected.id, 1)
             setAdded(true)
+            setOpenOverlay('cart')
           }}
           className="w-full rounded-sm bg-accent px-5 py-3 text-sm font-medium text-bone hover:bg-accent-hover sm:w-auto"
         >

@@ -39,7 +39,7 @@ export function NavDrawer() {
 
   return (
     <Modal open={open} onClose={close} label="Menu" align="left">
-      <div className="flex h-dvh w-[min(85vw,22rem)] flex-col bg-surface">
+      <div className="flex h-full w-[min(85vw,22rem)] flex-col bg-surface">
         <div className="flex items-center justify-between border-b border-border p-4">
           <span className="font-display text-base font-semibold text-ink">Menu</span>
           <button type="button" onClick={close} aria-label="Close menu" className="text-ink-hint hover:text-ink">

@@ -60,9 +60,9 @@ export function SiteHeader() {
               Account
             </button>
           )}
-          <Link href="/cart" className="no-underline text-ink hover:text-accent font-medium">
+          <button type="button" onClick={() => setOpenOverlay('cart')} className="text-ink hover:text-accent font-medium">
             Cart{itemCount > 0 ? ` (${itemCount})` : ''}
-          </Link>
+          </button>
         </div>
       </div>
     </header>

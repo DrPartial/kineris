@@ -319,3 +319,47 @@ of `api()`: the `Content-Type` header is now only set when `init.body` is actual
 five call sites were re-verified live (sign-out through a real browser click via CDP for both the
 storefront and admin app; the other three via a direct request matching the fixed client's
 headers), not just assumed fixed because the code looked right.
+
+## Cart count and cart images (October 2026)
+
+Two issues reported together: the header kept showing "Cart (1)" with nothing in the actual cart,
+and cart lines had no product image.
+
+- **Root cause of the count bug**: `CartContext` persists raw `{variantId, quantity}` lines to
+  localStorage with no server-side validation, ever. The cart *page* already resolved lines
+  against real fetched products and silently dropped anything that didn't match (left over from a
+  deleted product or an old catalogue swap), but the header's count was computed straight from the
+  raw localStorage lines, with no such check -- so a stale line from before the real-catalogue
+  cutover kept counting in the header forever while the cart page correctly showed empty.
+- **Fix**: `CartContext` now fetches the real product list once after hydration and prunes any
+  line whose variant no longer exists, persisting the cleaned-up cart back to localStorage. Every
+  reader of `lines` (header, bottom nav, cart page, checkout) now agrees on the same real count,
+  instead of the cart page being the only place that got it right. A failed fetch never wipes the
+  cart, it only prunes on a confirmed product list.
+- **Cart images**: `apps/web/src/app/cart/page.tsx` now renders each line's `ProductImage` (the
+  same component the shop grid and product page already use), falling back to the branded
+  placeholder for anything without photography.
+- Verified live: injected a stale variant id into localStorage via Chrome DevTools Protocol,
+  confirmed the header showed the correct count after the prune and the bad entry was gone from
+  localStorage; added a real item through the UI and confirmed its photo renders on the cart page.
+
+## Cart drawer (October 2026)
+
+The cart is now a right-side slide-out drawer (`CartDrawer.tsx`), the primary way to view/edit it
+without leaving the page. The `/cart` page still exists, unchanged, as a real linkable route (the
+drawer's "View full cart" link points there) for anyone who wants it full-screen or lands on it
+directly.
+
+- Opens from the header's Cart button, and automatically after "Add to cart" on both a product
+  page and a bundle page, so adding something actually shows you it landed, not just a button
+  label flipping to "Added to cart."
+- `Modal.tsx` (the shared overlay primitive already used by the nav drawer, search, account, and
+  welcome modal) gained a real slide/fade transition instead of popping in and out instantly: it
+  stays mounted for 300ms after closing so it can animate out, entering from off-screen on the
+  next frame rather than skipping straight to the open state. Centred modals fade and scale
+  slightly instead of sliding, since they're not anchored to a screen edge. This benefits every
+  overlay in the app, not just the new cart drawer.
+- Verified live via Chrome DevTools Protocol: the dialog is still in the DOM 100ms into closing
+  (genuinely animating, not vanishing) and gone by 400ms; opening via both the header button and
+  the auto-open-on-add path both work; the drawer shows the real product image, quantity control,
+  remove, subtotal, and links to checkout and the full cart page.

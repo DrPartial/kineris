@@ -14,10 +14,14 @@ const cheapestShipping = SHIPPING_OPTIONS.reduce((min, opt) => (opt.priceMinorUn
  * sticky + z-50 so it stays visible above every overlay (drawer, search,
  * account, welcome modal -- all z-40, see Modal.tsx) rather than being
  * covered by them, per pack 2.1's "visible throughout the site."
+ *
+ * id="site-ruo-bar" is read by Modal.tsx to measure this bar's rendered
+ * height, so a left/right drawer can start its own panel below it instead
+ * of underneath it.
  */
 export function RuoBar() {
   return (
-    <div className="sticky top-0 z-50 bg-ruo-bar text-ruo-bar-ink text-xs tracking-wide">
+    <div id="site-ruo-bar" className="sticky top-0 z-50 bg-ruo-bar text-ruo-bar-ink text-xs tracking-wide">
       {/* No items-center at the base size: a flex item's default min-width is
           its content's unwrapped width, so a centered (shrink-to-fit) item
           can force the row wider than the viewport. items-stretch (the
