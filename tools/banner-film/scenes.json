@@ -1,0 +1,11 @@
+[
+  {"name": "01_basalt",   "file": "basalt.mp4",   "ss": 0.0, "dur": 3.6},
+  {"name": "02_lab",      "file": "lab.mp4",      "ss": 0.3, "dur": 3.2, "transition": ["hblur", 0.5]},
+  {"name": "03_macro",    "file": "macro.mp4",    "ss": 0.0, "dur": 3.4, "transition": ["fadeblack", 0.5]},
+  {"name": "04_ice",      "file": "ice.mp4",      "ss": 1.0, "dur": 3.2, "transition": ["fade", 0.7]},
+  {"name": "05_lev",      "file": "lev.mp4",      "ss": 0.2, "dur": 3.4, "transition": ["smoothleft", 0.6]},
+  {"name": "06_top",      "file": "top.mp4",      "ss": 0.0, "dur": 3.0, "transition": ["hrslice", 0.5]},
+  {"name": "07_pedestal", "file": "pedestal.mp4", "ss": 0.2, "dur": 3.2, "transition": ["smoothdown", 0.6]},
+  {"name": "08_monolith", "file": "monolith.mp4", "ss": 0.0, "dur": 4.0, "transition": ["fadewhite", 0.5],
+   "grade": "colorbalance=bm=-0.05:bh=-0.05:gm=0.02,eq=saturation=0.86"}
+]

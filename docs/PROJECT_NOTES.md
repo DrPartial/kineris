@@ -302,3 +302,19 @@ run through `checkCompliance`.
   (desktop gets the 1080p file, mobile the 720p, time advances); the shipped H.264 files themselves
   (yuv420p, faststart) were not decoded in a browser here, so give the hero one look in Chrome and
   Safari.
+
+## Banner film (October 2026)
+
+A 23 s silent, text-free film made from eight object-only scenes (basalt, lab bench, label macro,
+frost and ice, levitating vial, overhead black glass, mirror-floor pedestals, monolith at sunrise),
+cut with a different transition per join and fading from/to black so it loops cleanly. Files in
+`apps/web/public/home/`: `banner-film-1080.mp4` (3.7 MB), `banner-film-720.mp4` (1.4 MB) and
+`banner-film-poster.webp`. The edit is reproducible from `tools/banner-film/` (see its README).
+
+- **Not wired into the page yet.** The live hero is still the single 8 s ice loop; the film is there
+  to try. Swapping it in is a two-constant change in `components/home/HeroVideo.tsx`.
+- Every scene was checked at 100% for label text. One real defect was found and trimmed out (a
+  droplet erasing a hyphen in the macro scene). The overhead scene's tiny "LYOPHILISED POWDER"
+  line is soft in motion, not misspelled.
+- The H.264 files were verified with ffprobe and frame extraction, not played back in a browser
+  (this sandbox's Chromium has no H.264), so give them one look in Chrome and Safari.
