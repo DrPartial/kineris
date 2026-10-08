@@ -18,7 +18,9 @@ const TRANSITION_MS = 300
  *
  * z-40, deliberately below RuoBar's z-50 (see RuoBar.tsx) so the RUO
  * statement stays visible above every overlay without duplicating its copy
- * inside each one.
+ * inside each one. A left/right drawer's own panel is offset below RuoBar's
+ * measured height (not just inset-y-0) so RuoBar sits above the panel's top
+ * edge instead of painting over the drawer's own header.
  */
 export function Modal({
   open,
@@ -38,20 +40,35 @@ export function Modal({
   const triggerRef = useRef<Element | null>(null)
   const [mounted, setMounted] = useState(open)
   const [entered, setEntered] = useState(false)
+  // For a left/right drawer only: how far down to start the panel so it
+  // doesn't render underneath the sticky, higher-z RuoBar (see RuoBar.tsx).
+  const [topOffset, setTopOffset] = useState(0)
 
   useEffect(() => {
     if (open) {
       setMounted(true)
-      // Start the transition on the next frame, not this one, so the browser
-      // paints the off-screen/faded starting position first -- doing it in
-      // the same frame as mounting would skip straight to the end state.
-      const raf = requestAnimationFrame(() => setEntered(true))
-      return () => cancelAnimationFrame(raf)
+      if (align !== 'center') {
+        setTopOffset(document.getElementById('site-ruo-bar')?.getBoundingClientRect().height ?? 0)
+      }
+      // A single requestAnimationFrame callback still runs *before* the
+      // browser's next paint, so it can fire before the "closed" starting
+      // position (set by setMounted above) has ever actually been painted --
+      // the browser then collapses both state changes into one paint and the
+      // element jumps straight to "open" with no visible motion. Nesting a
+      // second rAF defers to the frame after that guaranteed first paint.
+      let raf2 = 0
+      const raf1 = requestAnimationFrame(() => {
+        raf2 = requestAnimationFrame(() => setEntered(true))
+      })
+      return () => {
+        cancelAnimationFrame(raf1)
+        cancelAnimationFrame(raf2)
+      }
     }
     setEntered(false)
     const timeout = setTimeout(() => setMounted(false), TRANSITION_MS)
     return () => clearTimeout(timeout)
-  }, [open])
+  }, [open, align])
 
   useEffect(() => {
     if (!open) return
@@ -95,8 +112,8 @@ export function Modal({
     align === 'center'
       ? 'inset-0 flex items-center justify-center p-4'
       : align === 'left'
-        ? 'inset-y-0 left-0 flex'
-        : 'inset-y-0 right-0 flex'
+        ? 'bottom-0 left-0 flex'
+        : 'bottom-0 right-0 flex'
 
   const panelTransform =
     align === 'center'
@@ -116,13 +133,16 @@ export function Modal({
         onClick={onClose}
         aria-hidden="true"
       />
-      <div className={`absolute ${panelPosition}`}>
+      <div className={`absolute ${panelPosition}`} style={align !== 'center' ? { top: topOffset } : undefined}>
         <div
           ref={panelRef}
           role="dialog"
           aria-modal="true"
           aria-label={label}
-          className={`max-h-full transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] ${panelTransform}`}
+          // Tailwind v4 compiles translate-x-*/scale-* to the standalone CSS
+          // `translate`/`scale` properties, not the legacy `transform`
+          // property -- transitioning `transform` here would never fire.
+          className={`max-h-full transition-[translate,scale,opacity] duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] ${panelTransform}`}
         >
           {children}
         </div>

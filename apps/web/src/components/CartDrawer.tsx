@@ -66,7 +66,7 @@ export function CartDrawer() {
 
   return (
     <Modal open={open} onClose={close} label="Cart" align="right">
-      <div className="flex h-dvh w-[min(100vw,26rem)] flex-col bg-surface">
+      <div className="flex h-full w-[min(100vw,26rem)] flex-col bg-surface">
         <div className="flex items-center justify-between border-b border-border p-4">
           <h2 className="font-display text-lg font-semibold text-ink">Cart</h2>
           <button type="button" onClick={close} aria-label="Close cart" className="text-ink-hint hover:text-ink">
