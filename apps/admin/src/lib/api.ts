@@ -19,7 +19,11 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     ...init,
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...init?.headers },
+    // Only set JSON content-type when there's actually a body: Fastify's
+    // default JSON parser rejects an empty body sent with this header
+    // (FST_ERR_CTP_EMPTY_JSON_BODY), which broke every bodyless POST/PATCH
+    // call (sign-out, mark delivered/refunded, end promotion) until caught.
+    headers: { ...(init?.body ? { 'Content-Type': 'application/json' } : {}), ...init?.headers },
   })
   if (!res.ok) {
     const body = await parseErrorBody(res)

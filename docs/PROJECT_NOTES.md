@@ -302,3 +302,20 @@ run through `checkCompliance`.
   (desktop gets the 1080p file, mobile the 720p, time advances); the shipped H.264 files themselves
   (yuv420p, faststart) were not decoded in a browser here, so give the hero one look in Chrome and
   Safari.
+
+## Sign-out bug fix (October 2026)
+
+Every bodyless POST/PATCH call through the shared `api()` wrapper (`apps/web/src/lib/api.ts` and
+`apps/admin/src/lib/api.ts`) was broken: it unconditionally sent `Content-Type: application/json`
+even with no request body, and Fastify's default JSON parser rejects that combination
+(`FST_ERR_CTP_EMPTY_JSON_BODY`, a 400). Reported as "sign out isn't working," reproduced in a real
+browser rather than just read in code (curl without an explicit Content-Type header had been
+masking it during earlier verification passes), and traced to the real root cause rather than
+patched at the call site.
+
+Affected every bodyless call, not just sign-out: customer sign-out, admin sign-out, admin "Mark
+delivered," admin "Mark refunded," and the promotions "End now" action. Fixed once in both copies
+of `api()`: the `Content-Type` header is now only set when `init.body` is actually present. All
+five call sites were re-verified live (sign-out through a real browser click via CDP for both the
+storefront and admin app; the other three via a direct request matching the fixed client's
+headers), not just assumed fixed because the code looked right.
