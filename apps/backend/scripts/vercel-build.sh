@@ -6,7 +6,20 @@
 #    can never change the live database. Migrations need the direct (non-pooled) connection.
 #  - seed: only when RUN_SEED=1 is set for a build (one-off, then remove it). The seed script
 #    refuses to touch a hosted database without SEED_CONFIRM_REMOTE=yes, which we set here.
+#  - @kineris/shared ships as TypeScript source (the web app transpiles it, tsx runs it locally), but
+#    Node can't load .ts files from node_modules at runtime. So in this build container only, compile
+#    it to JS and point its package.json at the output. Nothing here is committed back.
 set -e
+
+(cd ../../packages/shared \
+  && pnpm exec tsc -p tsconfig.build.json \
+  && node -e "
+const fs = require('fs');
+const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+pkg.main = './dist/index.js';
+pkg.exports = { '.': { types: './src/index.ts', default: './dist/index.js' } };
+fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
+")
 
 pnpm exec prisma generate
 

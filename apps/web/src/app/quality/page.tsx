@@ -39,7 +39,7 @@ export default async function QualityPage({
       <h1 className="text-2xl font-semibold tracking-tight text-ink">Quality &amp; Certificates of Analysis</h1>
       <p className="mt-3 max-w-xl text-ink-muted">
         Every batch we supply is assigned its own batch number and Certificate of Analysis. Look
-        up any batch below, or browse what's recently been tested.
+        up any batch below, or browse what&rsquo;s recently been tested.
       </p>
 
       <p className="mt-4 text-sm text-ink-hint">

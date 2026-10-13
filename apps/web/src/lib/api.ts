@@ -1,4 +1,7 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
+// NEXT_PUBLIC_API_SAME_ORIGIN=1 (set on Vercel) sends browser calls to this site's own /api/*, which
+// next.config.ts rewrites to the backend, keeping the session cookie first-party.
+const API_URL =
+  process.env.NEXT_PUBLIC_API_SAME_ORIGIN === '1' ? '' : (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000')
 
 export class ApiError extends Error {
   constructor(
