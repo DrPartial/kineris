@@ -23,7 +23,7 @@ export default function SubscribersPage() {
   return (
     <AdminShell>
       <h1 className="text-xl font-semibold text-ink">Subscribers</h1>
-      <p className="mt-1 text-sm text-ink-muted">Everyone who's signed up through the welcome-modal flow.</p>
+      <p className="mt-1 text-sm text-ink-muted">Everyone who&rsquo;s signed up through the welcome-modal flow.</p>
 
       <table className="mt-6 w-full border-collapse text-sm">
         <thead>
