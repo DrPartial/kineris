@@ -60,9 +60,22 @@ export function SiteHeader() {
               Account
             </button>
           )}
-          <Link href="/cart" className="no-underline text-ink hover:text-accent font-medium">
-            Cart{itemCount > 0 ? ` (${itemCount})` : ''}
-          </Link>
+          <button
+            type="button"
+            onClick={() => setOpenOverlay('cart')}
+            aria-label={`Open cart${itemCount > 0 ? `, ${itemCount} item${itemCount === 1 ? '' : 's'}` : ''}`}
+            className="relative flex items-center gap-2 font-medium text-ink hover:text-accent"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M5 8h14l-1 12H6L5 8ZM9 8V6a3 3 0 0 1 6 0v2" />
+            </svg>
+            <span>Cart</span>
+            {itemCount > 0 && (
+              <span className="data-figure flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-[11px] font-semibold leading-none text-bone">
+                {itemCount}
+              </span>
+            )}
+          </button>
         </div>
       </div>
     </header>

@@ -1,10 +1,12 @@
 import type { Metadata } from 'next'
 import { Manrope, Sora } from 'next/font/google'
 import { AccountModal } from '@/components/AccountModal'
+import { CartDrawer } from '@/components/CartDrawer'
 import { CookieConsentBanner } from '@/components/CookieConsentBanner'
 import { MobileNav } from '@/components/MobileNav'
 import { NavDrawer } from '@/components/NavDrawer'
 import { RuoBar } from '@/components/RuoBar'
+import { RuoBarOffset } from '@/components/RuoBarOffset'
 import { SearchModal } from '@/components/SearchModal'
 import { SiteFooter } from '@/components/SiteFooter'
 import { SiteHeader } from '@/components/SiteHeader'
@@ -31,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <CartProvider>
             <OverlayProvider>
               <RuoBar />
+              <RuoBarOffset />
               <SiteHeader />
               <main className="min-h-screen pb-16 lg:pb-0">{children}</main>
               <SiteFooter />
@@ -38,6 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <MobileNav />
               <NavDrawer />
               <SearchModal />
+              <CartDrawer />
               <AccountModal />
               <WelcomeModal />
             </OverlayProvider>

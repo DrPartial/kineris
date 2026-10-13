@@ -77,8 +77,12 @@ export function Modal({
 
   return (
     <div className="fixed inset-0 z-40" role="presentation">
-      <div className="absolute inset-0 bg-pine-ink/40" onClick={onClose} aria-hidden="true" />
-      <div className={`absolute ${panelPosition}`}>
+      <div className="animate-fade-in absolute inset-0 bg-pine-ink/40" onClick={onClose} aria-hidden="true" />
+      <div
+        className={`absolute ${panelPosition} ${
+          align === 'right' ? 'animate-slide-in-right' : align === 'left' ? 'animate-slide-in-left' : ''
+        }`}
+      >
         <div ref={panelRef} role="dialog" aria-modal="true" aria-label={label} className="max-h-full">
           {children}
         </div>

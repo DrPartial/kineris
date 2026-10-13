@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ProductCard } from '@/components/ProductCard'
+import { ShopGrid } from '@/components/ShopGrid'
 import { fetchBundles, fetchProducts } from '@/lib/fetchers'
 
 // Neutral, factual categories only (pack section 7: "avoid category names
@@ -67,14 +67,7 @@ export default async function ShopPage({
           {bundles.length === 0 && <p className="text-sm text-ink-muted">No bundles available right now.</p>}
         </div>
       ) : (
-        <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {filteredProducts.map((p) => (
-            <ProductCard key={p.id} product={p} />
-          ))}
-          {filteredProducts.length === 0 && (
-            <p className="col-span-full text-sm text-ink-muted">No products in this category yet.</p>
-          )}
-        </div>
+        <ShopGrid key={category} products={filteredProducts} />
       )}
     </div>
   )

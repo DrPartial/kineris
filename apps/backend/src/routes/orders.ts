@@ -1,4 +1,4 @@
-import { SHIPPING_OPTIONS } from '@kineris/shared'
+import { SHIPPING_OPTIONS, shippingPriceMinorUnits } from '@kineris/shared'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 import { z } from 'zod'
 import { CUSTOMER_COOKIE } from '../lib/auth.ts'
@@ -106,7 +106,7 @@ export async function orderRoutes(app: FastifyInstance) {
           validatedDiscountCodeId = result.discountCodeId
         }
 
-        const totalMinorUnits = Math.max(0, subtotal - discountMinorUnits) + shipping.priceMinorUnits
+        const totalMinorUnits = Math.max(0, subtotal - discountMinorUnits) + shippingPriceMinorUnits(shipping, subtotal)
         const now = new Date()
 
         const created = await tx.order.create({

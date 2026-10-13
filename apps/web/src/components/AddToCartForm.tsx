@@ -2,7 +2,7 @@
 
 import type { ProductVariant } from '@kineris/shared'
 import { useState } from 'react'
-import { useCart } from '@/contexts/CartContext'
+import { useAddToCart } from '@/lib/useAddToCart'
 import { formatGBP } from '@/lib/money'
 import { BackInStockForm } from './BackInStockForm'
 import { useVariantSelection } from './VariantSelection'
@@ -14,8 +14,7 @@ export function AddToCartForm({ variants }: { variants: ProductVariant[] }) {
   const [localId, setLocalId] = useState(variants[0]?.id)
   const selectedId = shared ? shared.selectedId : localId
   const setSelectedId = shared ? shared.select : setLocalId
-  const { addLine } = useCart()
-  const [added, setAdded] = useState(false)
+  const addToCart = useAddToCart()
 
   const selected = variants.find((v) => v.id === selectedId) ?? variants[0]
   if (!selected) return null
@@ -32,7 +31,6 @@ export function AddToCartForm({ variants }: { variants: ProductVariant[] }) {
               type="button"
               onClick={() => {
                 setSelectedId(v.id)
-                setAdded(false)
               }}
               className={`rounded-sm border px-3 py-1.5 text-sm ${
                 v.id === selectedId
@@ -59,12 +57,11 @@ export function AddToCartForm({ variants }: { variants: ProductVariant[] }) {
         <button
           type="button"
           onClick={() => {
-            addLine(selected.id, 1)
-            setAdded(true)
+            addToCart(selected.id, 1)
           }}
           className="w-full rounded-sm bg-accent px-5 py-3 text-sm font-medium text-bone hover:bg-accent-hover sm:w-auto"
         >
-          {added ? 'Added to cart' : 'Add to cart'}
+          Add to cart
         </button>
       ) : (
         <BackInStockForm variantId={selected.id} />

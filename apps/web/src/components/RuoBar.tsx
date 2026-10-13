@@ -17,7 +17,7 @@ const cheapestShipping = SHIPPING_OPTIONS.reduce((min, opt) => (opt.priceMinorUn
  */
 export function RuoBar() {
   return (
-    <div className="sticky top-0 z-50 bg-ruo-bar text-ruo-bar-ink text-xs tracking-wide">
+    <div data-ruo-bar className="sticky top-0 z-50 bg-ruo-bar text-ruo-bar-ink text-xs tracking-wide">
       {/* No items-center at the base size: a flex item's default min-width is
           its content's unwrapped width, so a centered (shrink-to-fit) item
           can force the row wider than the viewport. items-stretch (the

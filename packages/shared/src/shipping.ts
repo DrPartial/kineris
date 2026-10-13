@@ -19,3 +19,17 @@ export const SHIPPING_OPTIONS: ShippingOption[] = [
 ]
 
 export const UK_ONLY_COUNTRY_CODE = 'GB'
+
+/**
+ * PLACEHOLDER, confirm before launch (pack section 6 leaves the free-shipping threshold open).
+ * Orders at or above this subtotal (before discounts) ship free on the standard option below.
+ * The cart drawer, checkout and the backend all read these, so changing them here changes all three.
+ */
+export const FREE_SHIPPING_THRESHOLD_MINOR_UNITS = 7500
+export const FREE_SHIPPING_OPTION_ID = 'royal-mail-tracked-48'
+
+export function shippingPriceMinorUnits(option: ShippingOption, subtotalMinorUnits: number): number {
+  return option.id === FREE_SHIPPING_OPTION_ID && subtotalMinorUnits >= FREE_SHIPPING_THRESHOLD_MINOR_UNITS
+    ? 0
+    : option.priceMinorUnits
+}

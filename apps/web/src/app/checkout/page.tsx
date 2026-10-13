@@ -1,7 +1,7 @@
 'use client'
 
 import type { DiscountValidationResult, Product, ShippingOption } from '@kineris/shared'
-import { UK_ONLY_COUNTRY_CODE } from '@kineris/shared'
+import { shippingPriceMinorUnits, UK_ONLY_COUNTRY_CODE } from '@kineris/shared'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useCart } from '@/contexts/CartContext'
@@ -64,7 +64,8 @@ export default function CheckoutPage() {
   const subtotal = lines.reduce((sum, l) => sum + (variantMap.get(l.variantId)?.priceMinorUnits ?? 0) * l.quantity, 0)
   const shipping = shippingOptions.find((s) => s.id === shippingOptionId)
   const discountMinorUnits = appliedDiscount?.discountAmountMinorUnits ?? 0
-  const total = Math.max(0, subtotal - discountMinorUnits) + (shipping?.priceMinorUnits ?? 0)
+  const shippingCost = shipping ? shippingPriceMinorUnits(shipping, subtotal) : 0
+  const total = Math.max(0, subtotal - discountMinorUnits) + shippingCost
 
   const signedIn = customer && customer !== 'loading'
   const canSubmit = lines.length > 0 && email && shippingOptionId && termsAccepted && ruoAccepted && !submitting
@@ -256,7 +257,9 @@ export default function CheckoutPage() {
                   />
                   {opt.label} <span className="text-ink-hint">({opt.etaLabel})</span>
                 </span>
-                <span className="data-figure">{formatGBP(opt.priceMinorUnits)}</span>
+                <span className="data-figure">
+                  {shippingPriceMinorUnits(opt, subtotal) === 0 ? 'Free' : formatGBP(shippingPriceMinorUnits(opt, subtotal))}
+                </span>
               </label>
             ))}
           </div>
@@ -324,7 +327,7 @@ export default function CheckoutPage() {
           )}
           <div className="mt-3 flex justify-between border-t border-border pt-3 text-sm">
             <span className="text-ink-muted">Shipping</span>
-            <span className="data-figure">{shipping ? formatGBP(shipping.priceMinorUnits) : '...'}</span>
+            <span className="data-figure">{shipping ? (shippingCost === 0 ? 'Free' : formatGBP(shippingCost)) : '...'}</span>
           </div>
           <div className="mt-2 flex justify-between text-base font-semibold text-ink">
             <span>Total</span>

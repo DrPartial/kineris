@@ -4,6 +4,7 @@ import { AddToCartForm } from '@/components/AddToCartForm'
 import { Badge } from '@/components/Badge'
 import { COACard } from '@/components/COACard'
 import { ProductCard } from '@/components/ProductCard'
+import { StickyBuyBar } from '@/components/StickyBuyBar'
 import { Tabs } from '@/components/Tabs'
 import { TrustIconRow } from '@/components/TrustIconRow'
 import { ProductHeroImage, VariantSelectionProvider } from '@/components/VariantSelection'
@@ -92,7 +93,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             {purity && <Badge variant="verified">{purity} purity</Badge>}
           </div>
 
-          <div className="mt-6 sticky bottom-0 z-10 -mx-4 border-t border-border bg-surface px-4 py-4 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0">
+          <div id="buy-form" className="mt-6">
             <AddToCartForm variants={product.variants} />
           </div>
 
@@ -105,6 +106,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           </p>
         </div>
       </div>
+      <StickyBuyBar targetId="buy-form" productName={product.name} variants={product.variants} />
       </VariantSelectionProvider>
 
       <div className="mt-12">

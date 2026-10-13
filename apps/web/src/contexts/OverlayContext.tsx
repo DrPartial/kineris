@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, type ReactNode } from 'react'
 
-export type OverlayName = 'drawer' | 'search' | 'account' | 'welcome' | null
+export type OverlayName = 'drawer' | 'search' | 'account' | 'welcome' | 'cart' | null
 
 interface OverlayContextValue {
   openOverlay: OverlayName
