@@ -1,18 +1,11 @@
-import { randomUUID } from 'node:crypto'
-import { createWriteStream } from 'node:fs'
-import { mkdir } from 'node:fs/promises'
-import path from 'node:path'
-import { pipeline } from 'node:stream/promises'
 import type { FastifyInstance } from 'fastify'
 import { prisma } from '../lib/prisma.ts'
 import { requireAdmin } from '../lib/requireAuth.ts'
-
-const UPLOAD_DIR = path.resolve(import.meta.dirname, '../../uploads/coa')
+import { saveCoaFile } from '../lib/storage.ts'
 
 /**
- * Local filesystem storage for dev (project plan: cloud storage is a
- * deploy-time decision, deferred). The file is served back at
- * /uploads/coa/<filename>, see server.ts's static-file registration.
+ * CoA PDFs are stored by lib/storage.ts: Vercel Blob when deployed, the local uploads folder
+ * (served at /uploads/coa/<file>, see server.ts) in dev.
  */
 export async function batchRoutes(app: FastifyInstance) {
   app.post('/api/admin/products/:productId/batches', async (req, reply) => {
@@ -34,10 +27,7 @@ export async function batchRoutes(app: FastifyInstance) {
         const value = String(part.value)
         reportedAt = value ? new Date(value) : null
       } else if (part.type === 'file' && part.fieldname === 'coaFile') {
-        await mkdir(UPLOAD_DIR, { recursive: true })
-        const filename = `${randomUUID()}.pdf`
-        await pipeline(part.file, createWriteStream(path.join(UPLOAD_DIR, filename)))
-        coaFileUrl = `/uploads/coa/${filename}`
+        coaFileUrl = await saveCoaFile(part.file)
       }
     }
 

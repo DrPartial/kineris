@@ -1,6 +1,7 @@
 import type { Bundle, CoaListing, Product } from '@kineris/shared'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
+// Server-side calls go straight to the backend (BACKEND_URL); the browser uses same-origin /api via the rewrite.
+const API_URL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
 export interface SiteStats {
   compoundCount: number
