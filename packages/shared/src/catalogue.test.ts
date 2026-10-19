@@ -42,9 +42,12 @@ test('one of each in the trio gets the trio price', () => {
 })
 
 test('the best combination wins, never a worse first match', () => {
-  // 5 + 5 qualifies for the combo bundle (455) or two 5-packs (480 + 480); the customer gets the larger saving.
+  // 5 + 5 qualifies for the combo bundle (1455) or two 5-packs (480 + 480); the customer gets the larger saving.
   const r = bundleSavings([line('bpc-157', '5mg', 5), line('tb-500', '2mg', 5)])
-  assert.equal(r.savingMinorUnits, 960)
+  assert.equal(r.savingMinorUnits, 1455)
+  assert.deepEqual(r.applied.map((a) => a.slug), ['bpc-157-tb-500-bundle'])
+  // With one more BPC-157 vial the extra vial stays a single; the trio needs a GHK-Cu.
+  assert.equal(bundleSavings([line('bpc-157', '5mg', 6), line('tb-500', '2mg', 5)]).savingMinorUnits, 1455)
 })
 
 test('vials outside any bundle get no saving', () => {

@@ -196,7 +196,7 @@ export const BUNDLES: BundleDefinition[] = [
       { slug: 'bpc-157', size: '5mg', quantity: 5 },
       { slug: 'tb-500', size: '2mg', quantity: 5 },
     ],
-    priceMinorUnits: 15995,
+    priceMinorUnits: 14995,
   },
   {
     slug: 'bpc-157-5-pack',

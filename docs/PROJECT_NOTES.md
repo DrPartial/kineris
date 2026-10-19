@@ -374,11 +374,10 @@ catalogue: BPC-157 5mg, TB-500 2mg, GHK-Cu 50mg, KPV 10mg, SS-31 10mg and bacter
   asked. TB-500 is specced as full-length Thymosin Beta-4; confirm the supplier's TB-500 matches before
   launch. Batch purity is never seeded: it comes from the real CoA uploaded in admin, and the homepage
   average-purity stat stays hidden until then.
-- **Bundles** are defined in `BUNDLES` with fixed prices (BPC+TB £159.95, 5-packs £79.95/£74.95, trio
+- **Bundles** are defined in `BUNDLES` with fixed prices (BPC+TB £149.95, 5-packs £79.95/£74.95, trio
   £54.95). The cart still holds plain vial lines; `bundleSavings` finds the best bundle combination for
   whatever vials are in the cart, and the storefront (`lib/cartPricing.ts`) and the order route price it
-  identically. Note: two 5-packs (£9.60 off) beat the BPC+TB bundle (£4.55 off) for the same 10 vials, so
-  buyers of that bundle are charged £154.90; the bundle price may want lowering to match.
+  identically. The BPC+TB bundle was lowered from £159.95 to £149.95 (Sean, 19 Oct) so it beats two 5-packs.
 - **Shipping**: Royal Mail Tracked 48 £3.95 (free when goods total, after bundle savings, is over £100),
   Tracked 24 £4.95, Special Delivery by 1pm £10.95. Same-day dispatch cut-off 2.30pm Mon-Fri
   (`DISPATCH_CUTOFF`), shown as a live countdown; bank holidays and half-days aren't modelled yet, and the
