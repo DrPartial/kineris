@@ -1,18 +1,81 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { BundleCard } from '@/components/BundleCard'
-import { COACard } from '@/components/COACard'
-import { CoaLookupForm } from '@/components/CoaLookupForm'
+import { LabListSignup } from '@/components/home/LabListSignup'
 import { Reveal } from '@/components/home/Reveal'
 import { ProductCard } from '@/components/ProductCard'
 import { StatCounter } from '@/components/StatCounter'
-import { TrustIconRow } from '@/components/TrustIconRow'
-import { WelcomeModalTrigger } from '@/components/WelcomeModalTrigger'
+import { type TrustIcon, TrustIconRow } from '@/components/TrustIconRow'
 import { FAQ } from '@/lib/faq'
-import { fetchBundles, fetchCoas, fetchProducts, fetchStats } from '@/lib/fetchers'
+import { fetchBundles, fetchProducts, fetchStats } from '@/lib/fetchers'
+
+/**
+ * The headline purity claim (Sean, 19 October 2026). It must match the independent CoAs
+ * before launch: the specs list TB-500 at >=98% and no batch has been tested yet.
+ */
+const PURITY_CLAIM = '99.9%'
+
+const HERO_TRUST: { icon: TrustIcon; label: string }[] = [
+  { icon: 'check', label: `${PURITY_CLAIM} purity` },
+  { icon: 'flask', label: 'Independent lab testing' },
+  { icon: 'coa', label: 'Tissue & repair specialists' },
+  { icon: 'pin', label: 'UK supplier' },
+  { icon: 'truck', label: 'Next day delivery' },
+]
+
+// Protide-style proof cards. No manufacturing certification is claimed: we have no evidence of one.
+const PROOF_CARDS = [
+  {
+    title: 'Third-party HPLC-MS verified',
+    body: 'Every batch is third-party tested to confirm purity and molecular identity through documented laboratory analysis.',
+  },
+  {
+    title: 'Batch tracked',
+    body: 'Every vial carries a batch number linked to its Certificate of Analysis, so you can check exactly what you received.',
+  },
+  {
+    title: 'Fast UK shipping & support',
+    body: 'Order by 2.30pm Mon-Fri for same-day dispatch by Royal Mail. Our UK team is ready to help with any procurement questions.',
+  },
+]
+
+const CLOSING_STRIP = [
+  {
+    title: 'Free UK delivery',
+    body: 'Free tracked delivery on orders over £100.',
+    icon: 'M3 7h11v9H3zM14 11h4l3 3v2h-7zM6.5 19.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM17.5 19.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z',
+  },
+  {
+    title: 'Ships from the UK',
+    body: 'Royal Mail tracked, next day available.',
+    icon: 'M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21ZM12 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
+  },
+  {
+    title: 'HPLC-verified purity',
+    body: 'Every batch is independently third-party tested.',
+    icon: 'M8 12l3 3 5-6M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
+  },
+  {
+    title: 'Secure checkout',
+    body: 'Encrypted checkout with guest or account ordering.',
+    icon: 'M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3Z',
+  },
+]
+
+const USPS = [
+  `HPLC-MS tested for ${PURITY_CLAIM} purity and molecular identity`,
+  'Secure packaging with tracked Royal Mail delivery, next day available',
+  'Certificates of Analysis published for every batch',
+  'UK-based team backing every order with dedicated support',
+  'Free tracked UK delivery on orders over £100',
+  'Every vial batch-numbered and traceable to its CoA',
+]
 
 const STEPS = [
-  { title: 'Select compounds', body: 'Choose single vials, 5-packs or a bundle. Bundle savings apply automatically.' },
+  {
+    title: 'Select compounds',
+    body: 'Choose single vials, 5-packs or a bundle. Bundle savings apply automatically.',
+  },
   {
     title: 'Picked from a tested batch',
     body: 'Your order is packed from the current, third-party tested batch, and dispatched the same day if placed by 2.30pm Mon-Fri.',
@@ -24,26 +87,47 @@ const STEPS = [
 ]
 
 const SPECIALIST_POINTS = [
-  { title: 'One focused range', body: 'Five tissue and repair research peptides, plus the lab supplies to go with them.' },
-  { title: 'Every batch independently tested', body: 'Third-party HPLC testing for purity and identity on every batch we sell.' },
-  { title: 'CoAs published', body: 'Each batch’s Certificate of Analysis is on its product page and searchable by batch number.' },
-  { title: 'Cold-chain storage, UK stock', body: 'Stored at -20 °C and dispatched from the UK by Royal Mail.' },
+  {
+    title: 'One focused range',
+    body: 'Five tissue and repair research peptides, plus the lab supplies to go with them.',
+  },
+  {
+    title: 'Every batch independently tested',
+    body: 'Third-party HPLC testing for purity and identity on every batch we sell.',
+  },
+  {
+    title: 'CoAs published',
+    body: 'Each batch’s Certificate of Analysis is on its product page and searchable by batch number.',
+  },
+  {
+    title: 'Cold-chain storage, UK stock',
+    body: 'Stored at -20 °C and dispatched from the UK by Royal Mail.',
+  },
 ]
 
 const eyebrow = 'text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted'
-const h2 = 'text-balance font-display text-3xl font-bold leading-[1.08] tracking-[-0.02em] text-ink sm:text-4xl lg:text-5xl'
+const h2 =
+  'text-balance font-display text-3xl font-bold leading-[1.08] tracking-[-0.02em] text-ink sm:text-4xl lg:text-5xl'
 
 export default async function HomePage() {
-  const [products, bundles, stats, coas] = await Promise.all([fetchProducts(), fetchBundles(), fetchStats(), fetchCoas()])
+  const [products, bundles, stats] = await Promise.all([fetchProducts(), fetchBundles(), fetchStats()])
   const peptides = products.filter((p) => p.category === 'peptide')
   const leadBundle = bundles.find((b) => b.slug === 'bpc-157-tb-500-bundle') ?? bundles[0] ?? null
   const compoundCount = stats?.compoundCount ?? peptides.length
 
   const statTiles = [
-    { value: String(compoundCount), label: 'Specialist compounds' },
+    {
+      value: String(compoundCount),
+      label: 'Specialised tissue & repair compounds',
+    },
     // Only shown once real batch CoAs are uploaded: the average is of tested batch purity, never the spec.
-    stats?.avgPurityPercent != null ? { value: `${stats.avgPurityPercent}%`, label: 'Average batch purity (HPLC)' } : null,
-    { value: 'Next day', label: 'Delivery', note: 'Order by 2.30pm Mon-Fri' },
+    stats?.avgPurityPercent != null
+      ? {
+          value: `${stats.avgPurityPercent}%`,
+          label: 'Average batch purity (HPLC)',
+        }
+      : null,
+    { value: 'UK', label: 'Lab tested and shipped in the UK' },
   ].filter((t): t is { value: string; label: string; note?: string } => t !== null)
 
   return (
@@ -57,13 +141,15 @@ export default async function HomePage() {
       <section className="bg-surface-page">
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 pb-10 pt-12 lg:grid-cols-[1fr_1.2fr] lg:gap-8 lg:pb-16 lg:pt-16">
           <div className="max-w-xl">
-            <p className={`animate-rise flex items-start gap-2.5 tracking-[0.14em] ${eyebrow}`}>
-              <span className="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full bg-ember" aria-hidden="true" />
-              Independently lab tested &middot; CoA for every batch &middot; Specialists in tissue &amp; repair &middot; UK
-              supplier
+            {/* Protide-style proof pill: the three facts a researcher checks first, before the headline. */}
+            <p className="animate-rise inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent-soft px-3.5 py-1.5 text-xs font-semibold text-accent">
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-ember" aria-hidden="true" />
+              {PURITY_CLAIM} purity &middot; Tissue &amp; repair specialists &middot; UK supplier &middot; Next day
+              delivery
             </p>
             <h1 className="animate-rise mt-5 text-balance font-display text-4xl font-bold leading-[1.05] tracking-[-0.025em] text-ink [animation-delay:120ms] sm:text-5xl xl:text-[3.5rem]">
-              Trusted UK Supplier of Tissue &amp; Repair Research Peptides
+              Trusted <span className="text-accent">UK Supplier</span> of Tissue &amp; Repair Research{' '}
+              <span className="text-accent">Peptides</span>
             </h1>
             <p className="animate-rise mt-6 max-w-lg text-lg leading-relaxed text-ink-muted [animation-delay:240ms]">
               Specialists in BPC-157, TB-500, GHK-Cu, KPV and SS-31. Every batch is third-party tested for purity and
@@ -74,13 +160,13 @@ export default async function HomePage() {
                 href="/shop"
                 className="rounded-sm bg-accent px-6 py-3 text-sm font-semibold text-bone no-underline hover:bg-accent-hover"
               >
-                Shop Peptides
+                Shop Peptides &rarr;
               </Link>
               <Link
                 href="/quality"
                 className="rounded-sm border border-border-strong px-6 py-3 text-sm font-semibold text-ink no-underline hover:border-ink"
               >
-                Verify a CoA
+                Verify a CoA &rarr;
               </Link>
             </div>
             <p className="animate-rise mt-6 inline-block rounded-sm bg-surface-sunken px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-ink [animation-delay:420ms]">
@@ -100,7 +186,7 @@ export default async function HomePage() {
         </div>
         <div className="border-y border-border bg-surface">
           <div className="mx-auto max-w-6xl px-4 py-5">
-            <TrustIconRow centered />
+            <TrustIconRow items={HERO_TRUST} centered />
           </div>
         </div>
       </section>
@@ -121,6 +207,31 @@ export default async function HomePage() {
           </div>
         </section>
       )}
+
+      {/* Protide-style proof block: a search-friendly headline, the testing method, and three proof cards. */}
+      <section className="bg-surface-page">
+        <div className="on-dark bg-pine-ink">
+          <Reveal className="mx-auto max-w-4xl px-4 pb-36 pt-20 text-center sm:pb-40 sm:pt-24">
+            <h2 className={h2}>Buy Research Peptides in the UK: Verified {PURITY_CLAIM} Purity &amp; Identity</h2>
+            <p className="mx-auto mt-6 max-w-3xl text-lg leading-relaxed text-ink-muted">
+              Kineris Labs is a UK specialist supplier of tissue and repair research peptides. Every compound is clearly
+              labelled and third-party tested by an independent analytical laboratory using High-Performance Liquid
+              Chromatography (HPLC) and Mass Spectrometry to confirm purity and molecular identity. Batch-specific
+              Certificates of Analysis are published for every compound.
+            </p>
+          </Reveal>
+        </div>
+        <div className="mx-auto -mt-24 grid max-w-6xl gap-5 px-4 pb-20 sm:pb-24 md:grid-cols-3">
+          {PROOF_CARDS.map((card, i) => (
+            <Reveal key={card.title} delay={i * 80} className="h-full">
+              <div className="h-full rounded-lg border border-border bg-surface p-8 text-center shadow-sm">
+                <h3 className="font-display text-xl font-semibold tracking-tight text-ink">{card.title}</h3>
+                <p className="mt-4 leading-relaxed text-ink-muted">{card.body}</p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </section>
 
       {(products.length > 0 || leadBundle) && (
         <section className="bg-surface-page pb-24 sm:pb-28">
@@ -150,60 +261,45 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Traceability, with a working batch lookup beside it. */}
-      <section className="bg-pine-ink">
-        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-20 sm:py-24 lg:grid-cols-2">
-          <Reveal className="on-dark max-w-md">
-            <p className={eyebrow}>Batch &amp; lot tracked</p>
-            <h2 className={`${h2} mt-4`}>
-              One vial.
-              <br />
-              One batch.
-              <br />
-              One record.
-            </h2>
-            <p className="mt-6 text-lg leading-relaxed text-ink-muted">
-              Every batch has its own batch number and independent Certificate of Analysis, and every order is packed from
-              the current tested batch. Enter the batch number from your vial to see its CoA.
-            </p>
-          </Reveal>
-          <Reveal delay={120}>
-            <div className="rounded-lg bg-surface p-6 sm:p-8">
-              <p className="font-display text-lg font-semibold text-ink">Look up a batch</p>
-              <p className="mb-4 mt-1 text-sm text-ink-muted">Batch number is printed on the vial label and packing slip.</p>
-              <CoaLookupForm />
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* Conga line of proof: the CoA for every product in the range. */}
+      {/* Key USPs: one statement, six checkable reasons. */}
       <section className="bg-surface-page">
-        <div className="mx-auto max-w-6xl px-4 py-24 sm:py-28">
-          <Reveal className="mb-10 flex flex-wrap items-end justify-between gap-4">
-            <div className="max-w-2xl">
-              <p className={eyebrow}>Certificates of Analysis</p>
-              <h2 className={`${h2} mt-3`}>Independent results, in the open.</h2>
-              <p className="mt-5 max-w-lg text-lg leading-relaxed text-ink-muted">
-                Every batch is tested by an independent third-party lab for purity and identity. The full report is one
-                click from every product.
-              </p>
+        <div className="mx-auto max-w-6xl px-4 pb-24 sm:pb-28">
+          <Reveal>
+            <div className="on-dark rounded-lg bg-pine-ink px-6 py-12 sm:px-12 sm:py-16">
+              <h2 className={`${h2} max-w-2xl`}>
+                Tested, verified and shipped so your research is the only variable that matters.
+              </h2>
             </div>
-            <Link href="/quality" className="text-sm font-semibold text-accent no-underline hover:text-accent-hover">
-              Lab Testing &amp; CoA library &rarr;
-            </Link>
           </Reveal>
-          {coas.length > 0 ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {coas.slice(0, 6).map((c, i) => (
-                <Reveal key={c.id} delay={(i % 3) * 80}>
-                  <COACard batch={c} />
-                </Reveal>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-ink-hint">Batch certificates are being published.</p>
-          )}
+          <ul className="mt-10 grid gap-x-12 gap-y-6 sm:grid-cols-2">
+            {USPS.map((usp, i) => (
+              <Reveal key={usp} delay={(i % 2) * 80}>
+                <li className="flex items-start gap-4 text-lg text-ink">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="mt-1 shrink-0 text-accent"
+                    aria-hidden="true"
+                  >
+                    <path d="M5 12l5 5L20 7" />
+                  </svg>
+                  {usp}
+                </li>
+              </Reveal>
+            ))}
+          </ul>
+          <Link
+            href="/quality"
+            className="mt-10 inline-block text-sm font-semibold text-accent no-underline hover:text-accent-hover"
+          >
+            Lab Testing &amp; CoA library &rarr;
+          </Link>
         </div>
       </section>
 
@@ -260,7 +356,10 @@ export default async function HomePage() {
               </details>
             ))}
           </div>
-          <Link href="/faq" className="mt-6 inline-block text-sm font-semibold text-accent no-underline hover:text-accent-hover">
+          <Link
+            href="/faq"
+            className="mt-6 inline-block text-sm font-semibold text-accent no-underline hover:text-accent-hover"
+          >
             All FAQs &rarr;
           </Link>
         </div>
@@ -268,16 +367,65 @@ export default async function HomePage() {
 
       <section className="bg-surface-page px-4 pb-24 sm:pb-28">
         <Reveal>
-          <div className="on-dark mx-auto max-w-6xl rounded-lg bg-pine-ink px-6 py-16 text-center sm:px-12 sm:py-20">
-            <h2 className={h2}>10% off your first order</h2>
-            <p className="mx-auto mt-5 max-w-md text-lg text-ink-muted">
-              Plus batch release and restock alerts. Get a single-use code sent to your email.
-            </p>
-            <WelcomeModalTrigger className="mt-9 inline-block rounded-sm bg-ember px-7 py-3.5 text-sm font-semibold text-pine-ink hover:opacity-90">
-              Get 10% off
-            </WelcomeModalTrigger>
+          <div className="on-dark mx-auto grid max-w-6xl items-center gap-10 rounded-lg bg-pine-ink px-6 py-16 sm:px-12 sm:py-20 lg:grid-cols-2">
+            <div>
+              <p className={`flex items-center gap-2.5 ${eyebrow}`}>
+                <span className="h-2 w-2 rotate-45 bg-ember" aria-hidden="true" />
+                Research updates
+              </p>
+              <h2 className={`${h2} mt-4`}>Join the lab list.</h2>
+              <p className="mt-5 max-w-md text-lg leading-relaxed text-ink-muted">
+                Join the lab list for batch releases and restock alerts. New subscribers get 10% off their first order.
+              </p>
+            </div>
+            <LabListSignup />
           </div>
         </Reveal>
+      </section>
+
+      {/* Explicit research-use notice, as Protide carries: compliance stated plainly, not hidden in the footer. */}
+      <section className="bg-surface-sunken">
+        <Reveal className="mx-auto max-w-3xl px-4 py-16 text-center sm:py-20">
+          <h2 className="font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">
+            Research Use Only Notice
+          </h2>
+          <p className="mt-5 leading-relaxed text-ink-muted">
+            Kineris Labs is a specialist supplier of analytical-grade research peptides for in vitro laboratory
+            research. All products are supplied for laboratory research only and are not for human or animal
+            consumption, medical use, veterinary use, or any therapeutic, diagnostic or clinical purpose. Please review
+            our{' '}
+            <Link href="/legal/terms" className="text-accent">
+              Terms &amp; Conditions
+            </Link>{' '}
+            before purchasing.
+          </p>
+        </Reveal>
+      </section>
+
+      {/* Closing value strip: the offer, the origin, the proof and the checkout, one line each. */}
+      <section className="border-t border-border bg-surface">
+        <ul className="mx-auto grid max-w-6xl grid-cols-2 gap-8 px-4 py-14 text-center lg:grid-cols-4">
+          {CLOSING_STRIP.map((item) => (
+            <li key={item.title}>
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="mx-auto text-accent"
+                aria-hidden="true"
+              >
+                <path d={item.icon} />
+              </svg>
+              <p className="mt-4 font-display text-lg font-semibold text-ink">{item.title}</p>
+              <p className="mt-1 text-sm text-ink-muted">{item.body}</p>
+            </li>
+          ))}
+        </ul>
       </section>
     </div>
   )
