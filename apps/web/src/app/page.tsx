@@ -87,14 +87,14 @@ export default async function HomePage() {
               Research Use Only &middot; Not for human or veterinary use
             </p>
           </div>
-          <div className="animate-rise relative aspect-[2200/1180] [animation-delay:200ms]">
+          <div className="animate-rise relative aspect-[2200/1180] mix-blend-multiply [animation-delay:200ms]">
             <Image
               src="/home/range-lineup.webp"
               alt="The five Kineris research peptide vials: GHK-Cu 50mg, TB-500 2mg, BPC-157 5mg, KPV 10mg and SS-31 10mg"
               fill
               priority
               sizes="(min-width: 1024px) 600px, 100vw"
-              className="object-contain mix-blend-multiply"
+              className="object-contain"
             />
           </div>
         </div>
