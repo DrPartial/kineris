@@ -1,6 +1,5 @@
-import { showOnShopPage } from '@kineris/shared'
+import { showOnLabSuppliesPage, showOnShopPage } from '@kineris/shared'
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
 import { BundleCard } from '@/components/BundleCard'
 import { ProductCard } from '@/components/ProductCard'
 import { fetchBundles, fetchProducts } from '@/lib/fetchers'
@@ -17,16 +16,17 @@ const CATEGORIES = [
 
 export default async function ShopPage({ searchParams }: { searchParams: Promise<{ category?: string }> }) {
   const { category = 'all' } = await searchParams
-  if (category === 'lab_supply') redirect('/lab-supplies')
   const [products, bundles] = await Promise.all([fetchProducts(), fetchBundles()])
 
-  // "All" is the peptides, bac water and the storage case; the rest of the lab equipment is on /lab-supplies.
+  // "All" is the peptides, bac water and the storage case; "Lab supplies" is the lab equipment, as on /lab-supplies.
   const filteredProducts =
     category === 'all'
       ? products.filter(showOnShopPage)
       : category === 'bundle'
         ? []
-        : products.filter((p) => p.category === category)
+        : category === 'lab_supply'
+          ? products.filter(showOnLabSuppliesPage)
+          : products.filter((p) => p.category === category)
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
@@ -39,9 +39,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
         {CATEGORIES.map((c) => (
           <Link
             key={c.value}
-            href={
-              c.value === 'all' ? '/shop' : c.value === 'lab_supply' ? '/lab-supplies' : `/shop?category=${c.value}`
-            }
+            href={c.value === 'all' ? '/shop' : `/shop?category=${c.value}`}
             className={`rounded-full border px-4 py-1.5 text-sm no-underline ${
               category === c.value
                 ? 'border-accent bg-accent-soft text-accent'
