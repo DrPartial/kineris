@@ -191,7 +191,9 @@ def write_manifest(products):
         "// Sizes that have a product image at /products/<slug>-<size>.webp.",
         "export const PRODUCT_IMAGE_SIZES: Record<string, string[]> = {",
     ]
-    for p in products:
+    # Lab supplies are photos standardised by lab_supplies.py, not rendered here; list them too.
+    static = json.loads((HERE / "static-images.json").read_text(encoding="utf-8"))
+    for p in products + static:
         sizes = ", ".join(f"'{s}'" for s in p["sizes"])
         lines.append(f"  '{p['slug']}': [{sizes}],")
     lines += ["}", ""]

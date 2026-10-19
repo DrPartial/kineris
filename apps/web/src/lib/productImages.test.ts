@@ -19,7 +19,7 @@ test('every catalogue product and size has a product image on disk', () => {
 })
 
 test('every product image belongs to a catalogue product and size', () => {
-  const live = new Map(FULL_CATALOGUE.map((e) => [e.slug, e.variants.map((v) => v.size)]))
+  const live = new Map(FULL_CATALOGUE.map((e) => [e.slug, e.variants.map((v) => v.size.toLowerCase().replace(/\s+/g, ''))]))
   for (const [slug, sizes] of Object.entries(PRODUCT_IMAGE_SIZES)) {
     assert.ok(live.has(slug), `product image for unknown catalogue slug "${slug}"`)
     for (const size of sizes) {

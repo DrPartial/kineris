@@ -7,4 +7,11 @@ export const PRODUCT_IMAGE_SIZES: Record<string, string[]> = {
   'kpv': ['10mg'],
   'ss-31': ['10mg'],
   'bacteriostatic-water': ['10ml'],
+  'peptide-storage-case': ['1case'],
+  'sterile-vials-10ml': ['5pack', '10pack'],
+  'vial-stopper-cap-kit': ['10sets'],
+  'amber-dropper-bottles-5ml': ['5pack'],
+  'petri-dishes-90mm': ['single'],
+  'glass-beaker-100ml': ['100ml'],
+  'glass-dropper-pipettes': ['setof10'],
 }

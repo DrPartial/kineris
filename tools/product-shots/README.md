@@ -41,3 +41,18 @@ catalogue's longer display names.
 - No "human" wording (banned by `packages/shared/src/compliance.ts`), the label says
   "For research use only".
 - "Lyophilised powder" is printed on every label; confirm it is true for the whole range.
+
+## Lab supplies
+
+Lab supply images are not rendered by `build.py`. They are listed in `static-images.json` so the
+manifest includes them. The scripts are in `lab-supplies/` and are run from that folder:
+
+- `emptyvial.py` removes the label and powder from the vial plate to make an empty vial.
+- `groups.py` arranges that vial into the sterile-vial packs and the vial kit.
+- `std.py` takes the supplier product photos Sean chose and gives them the peptide-shot look:
+  a pure white background, a square 1200px frame, the same margins and a soft floor shadow.
+  The source photos are in the project files at `website/lab-supplies-images/originals/`, not
+  in this repo.
+
+Copy the output PNGs to `apps/web/public/products/<slug>-<size>.webp` (size lowercased, spaces
+removed).

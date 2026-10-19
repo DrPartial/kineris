@@ -1,0 +1,9 @@
+[
+  { "slug": "peptide-storage-case",       "sizes": ["1case"] },
+  { "slug": "sterile-vials-10ml",         "sizes": ["5pack", "10pack"] },
+  { "slug": "vial-stopper-cap-kit",       "sizes": ["10sets"] },
+  { "slug": "amber-dropper-bottles-5ml",  "sizes": ["5pack"] },
+  { "slug": "petri-dishes-90mm",          "sizes": ["single"] },
+  { "slug": "glass-beaker-100ml",         "sizes": ["100ml"] },
+  { "slug": "glass-dropper-pipettes",     "sizes": ["setof10"] }
+]

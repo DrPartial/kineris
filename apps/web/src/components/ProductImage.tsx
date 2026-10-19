@@ -3,7 +3,7 @@ import { productImageSrc } from '@/lib/productImages'
 import { ImagePlaceholder } from './ImagePlaceholder'
 
 /**
- * A product's vial photo (apps/web/public/products, built by tools/product-shots), or the branded
+ * A product photo (apps/web/public/products, built by tools/product-shots), or the branded
  * ImagePlaceholder for anything without photography yet (e.g. the lab supplies). The photos are on
  * pure white, so they sit seamlessly on the white cards.
  */
@@ -33,7 +33,7 @@ export function ProductImage({
     <div className={`overflow-hidden rounded-lg bg-white ${bordered ? 'border border-border' : ''} ${className}`}>
       <Image
         src={src}
-        alt={`Kineris ${name}${size ? ` ${size}` : ''} research vial`}
+        alt={`Kineris ${name}${size ? ` ${size}` : ''}`}
         width={1200}
         height={1200}
         sizes={sizes}
