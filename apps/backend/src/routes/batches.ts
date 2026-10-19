@@ -1,3 +1,4 @@
+import { showOnLabSuppliesPage } from '@kineris/shared'
 import type { FastifyInstance } from 'fastify'
 import { prisma } from '../lib/prisma.ts'
 import { requireAdmin } from '../lib/requireAuth.ts'
@@ -70,9 +71,12 @@ export async function batchRoutes(app: FastifyInstance) {
   app.get('/api/coas', async () => {
     const batches = await prisma.batch.findMany({
       where: { isCurrent: true },
-      include: { product: { select: { name: true, slug: true } } },
+      include: { product: { select: { name: true, slug: true, category: true } } },
       orderBy: [{ reportedAt: 'desc' }, { createdAt: 'desc' }],
     })
+    // Lab equipment (beakers, vials, cases) isn't batch-tested, so it never appears as a pending CoA.
     return batches
+      .filter((b) => !showOnLabSuppliesPage(b.product))
+      .map((b) => ({ ...b, product: { name: b.product.name, slug: b.product.slug } }))
   })
 }

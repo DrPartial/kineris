@@ -8,7 +8,7 @@
 import { randomUUID } from 'node:crypto'
 import { copyFile, mkdir } from 'node:fs/promises'
 import path from 'node:path'
-import { BUNDLES, FULL_CATALOGUE } from '@kineris/shared'
+import { BUNDLES, FULL_CATALOGUE, showOnLabSuppliesPage } from '@kineris/shared'
 import { PrismaClient } from '@prisma/client'
 import { hashPassword } from '../src/lib/auth.ts'
 
@@ -94,7 +94,8 @@ async function main() {
     }
 
     const hasCurrentBatch = await prisma.batch.findFirst({ where: { productId: product.id, isCurrent: true } })
-    if (!hasCurrentBatch) {
+    // Lab equipment isn't batch-tested, so it gets no batch (and no pending CoA).
+    if (!hasCurrentBatch && !showOnLabSuppliesPage(entry)) {
       // Only the very first product gets the watermarked sample CoA PDF
       // attached, purely so the fully-populated CoA card UI is visible in
       // local dev -- every other batch is honestly CoA-pending until the

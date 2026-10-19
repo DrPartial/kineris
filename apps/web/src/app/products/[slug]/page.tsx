@@ -1,4 +1,4 @@
-import { BUNDLES, bundleSinglesTotalMinorUnits, catalogueEntry } from '@kineris/shared'
+import { BUNDLES, bundleSinglesTotalMinorUnits, catalogueEntry, showOnLabSuppliesPage } from '@kineris/shared'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -26,12 +26,25 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 }
 
+const COA_FAQ = [
+  {
+    q: 'Where is the Certificate of Analysis for this batch?',
+    a: 'See the Certificate of Analysis tab above. Every batch can also be looked up directly on the Lab Testing & CoAs page.',
+  },
+  {
+    q: 'What if no CoA is listed yet for this batch?',
+    a: 'The batch is on record but testing documentation hasn’t been published yet. Check back, or contact us.',
+  },
+]
+
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const [product, allProducts] = await Promise.all([fetchProduct(slug), fetchProducts()])
   if (!product) notFound()
 
   const entry = catalogueEntry(product.slug)
+  // Lab equipment (vials, glassware, cases) isn't batch-tested, so it has no CoA tab or batch number.
+  const isEquipment = showOnLabSuppliesPage(product)
   const allDataFields: [string, string | null][] = [
     ['Research area', entry?.researchArea ?? null],
     ['CAS number', product.casNumber],
@@ -41,7 +54,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     ['Appearance', product.form],
     ['Purity (specification)', product.variants[0]?.purity ?? null],
     ['Storage conditions', product.storageConditions],
-    ['Current batch', product.currentBatch?.batchNumber ?? null],
+    ['Current batch', isEquipment ? null : (product.currentBatch?.batchNumber ?? null)],
   ]
   const dataFields = allDataFields.filter(
     (field): field is [string, string] => field[1] !== null,
@@ -164,7 +177,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       <div id="product-tabs" className="mt-12 scroll-mt-28">
         <Tabs
           items={[
-            {
+            !isEquipment && {
               id: 'coa',
               label: 'Certificate of Analysis',
               content: product.currentBatch ? (
@@ -220,14 +233,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                       q: 'What does Research Use Only (RUO) mean?',
                       a: 'This product is sold strictly for laboratory research use, not for human or veterinary use. Checkout requires confirming this before an order can be placed.',
                     },
-                    {
-                      q: 'Where is the Certificate of Analysis for this batch?',
-                      a: 'See the Certificate of Analysis tab above. Every batch can also be looked up directly on the Lab Testing & CoAs page.',
-                    },
-                    {
-                      q: 'What if no CoA is listed yet for this batch?',
-                      a: 'The batch is on record but testing documentation hasn’t been published yet. Check back, or contact us.',
-                    },
+                    ...(isEquipment ? [] : COA_FAQ),
                   ].map((item) => (
                     <details key={item.q} className="rounded-sm border border-border p-3">
                       <summary className="cursor-pointer text-sm font-medium text-ink">{item.q}</summary>
@@ -237,7 +243,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 </div>
               ),
             },
-          ]}
+          ].filter((item) => item !== false)}
         />
       </div>
 
