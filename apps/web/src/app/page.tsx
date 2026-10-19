@@ -116,10 +116,7 @@ export default async function HomePage() {
   const compoundCount = stats?.compoundCount ?? peptides.length
 
   const statTiles = [
-    {
-      value: String(compoundCount),
-      label: 'Specialised tissue & repair compounds',
-    },
+    { value: 'Repair Specialists', label: `${compoundCount} high-quality tissue & repair compounds` },
     // Only shown once real batch CoAs are uploaded: the average is of tested batch purity, never the spec.
     stats?.avgPurityPercent != null
       ? {
@@ -127,7 +124,7 @@ export default async function HomePage() {
           label: 'Average batch purity (HPLC)',
         }
       : null,
-    { value: 'UK', label: 'Lab tested and shipped in the UK' },
+    { value: 'UK Supplier', label: 'Lab tested and shipped from the UK' },
   ].filter((t): t is { value: string; label: string; note?: string } => t !== null)
 
   return (
@@ -239,7 +236,7 @@ export default async function HomePage() {
             <Reveal className="mb-10 flex flex-wrap items-end justify-between gap-4">
               <div className="max-w-2xl">
                 <p className={eyebrow}>The range</p>
-                <h2 className={`${h2} mt-3`}>Tissue &amp; repair research peptides, every batch tested.</h2>
+                <h2 className={`${h2} mt-3`}>Lab-Tested Tissue &amp; Repair Research Peptides</h2>
               </div>
               <Link href="/shop" className="text-sm font-semibold text-accent no-underline hover:text-accent-hover">
                 Shop all &rarr;
