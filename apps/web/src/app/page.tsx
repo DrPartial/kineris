@@ -60,16 +60,16 @@ const USPS = [
 
 const STEPS = [
   {
-    title: 'Select compounds',
-    body: 'Choose single vials, 5-packs or a bundle. Bundle savings apply automatically.',
+    title: 'Select Your Compounds',
+    body: 'Choose from a range of specialised tissue and repair research peptides, each third-party tested with publicly documented CoAs. Buy in bundles for the best value.',
   },
   {
-    title: 'Picked from a tested batch',
-    body: 'Your order is packed from the current, third-party tested batch, and dispatched the same day if placed by 2.30pm Mon-Fri.',
+    title: 'Packed & Shipped From UK',
+    body: 'Orders are packed and shipped from our UK facility with full dispatch-to-delivery tracking.',
   },
   {
-    title: 'Royal Mail Tracked 24hrs',
-    body: 'Next-day tracked delivery, or Special Delivery guaranteed by 1pm. UK addresses only.',
+    title: 'Next Day Delivery',
+    body: 'Order before 2.30pm for next day delivery. Or standard 2-3 business day delivery in insulated, protective packaging for guaranteed quality.',
   },
 ]
 
@@ -306,19 +306,18 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="bg-surface-sunken">
+      {/* How it works, Protide-style: a centred heading over three soft cards. */}
+      <section className="bg-surface">
         <div className="mx-auto max-w-6xl px-4 py-24 sm:py-28">
           <Reveal>
-            <p className={eyebrow}>How it works</p>
-            <h2 className={`${h2} mt-3 max-w-xl`}>From catalogue to your lab.</h2>
+            <h2 className={`${h2} text-center`}>How It Works</h2>
           </Reveal>
-          <ol className="mt-14 grid gap-12 sm:grid-cols-3 sm:gap-10">
+          <ol className="mt-14 grid gap-5 md:grid-cols-3 md:gap-8">
             {STEPS.map((step, i) => (
-              <Reveal key={step.title} delay={i * 100}>
-                <li className="border-t border-border-strong pt-6">
-                  <span className="data-figure text-sm font-medium text-accent">0{i + 1}</span>
-                  <h3 className="mt-3 font-display text-xl font-semibold tracking-tight text-ink">{step.title}</h3>
-                  <p className="mt-2 max-w-xs text-ink-muted">{step.body}</p>
+              <Reveal key={step.title} delay={i * 100} className="h-full">
+                <li className="h-full rounded-lg bg-surface-sunken px-8 py-10 text-center">
+                  <h3 className="text-balance font-display text-2xl font-semibold tracking-tight text-ink">{step.title}</h3>
+                  <p className="mt-4 leading-relaxed text-ink-muted">{step.body}</p>
                 </li>
               </Reveal>
             ))}
