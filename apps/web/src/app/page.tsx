@@ -5,23 +5,10 @@ import { LabListSignup } from '@/components/home/LabListSignup'
 import { Reveal } from '@/components/home/Reveal'
 import { ProductCard } from '@/components/ProductCard'
 import { StatCounter } from '@/components/StatCounter'
-import { type TrustIcon, TrustIconRow } from '@/components/TrustIconRow'
+import { TrustIconRow } from '@/components/TrustIconRow'
+import { PURITY_CLAIM, SITE_TRUST } from '@/lib/claims'
 import { FAQ } from '@/lib/faq'
 import { fetchBundles, fetchProducts, fetchStats } from '@/lib/fetchers'
-
-/**
- * The headline purity claim (Sean, 19 October 2026). It must match the independent CoAs
- * before launch: the specs list TB-500 at >=98% and no batch has been tested yet.
- */
-const PURITY_CLAIM = '99.9%'
-
-const HERO_TRUST: { icon: TrustIcon; label: string }[] = [
-  { icon: 'check', label: `${PURITY_CLAIM} purity` },
-  { icon: 'flask', label: 'Independent lab testing' },
-  { icon: 'coa', label: 'Tissue & repair specialists' },
-  { icon: 'pin', label: 'UK supplier' },
-  { icon: 'truck', label: 'Next day delivery' },
-]
 
 // Protide-style proof cards. No manufacturing certification is claimed: we have no evidence of one.
 const PROOF_CARDS = [
@@ -183,7 +170,7 @@ export default async function HomePage() {
         </div>
         <div className="border-y border-border bg-surface">
           <div className="mx-auto max-w-6xl px-4 py-5">
-            <TrustIconRow items={HERO_TRUST} centered />
+            <TrustIconRow items={SITE_TRUST} centered />
           </div>
         </div>
       </section>

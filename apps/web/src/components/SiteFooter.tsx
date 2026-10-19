@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { SITE_TRUST } from '@/lib/claims'
 import { TrustIconRow } from './TrustIconRow'
 
 const LEGAL_LINKS = [
@@ -41,7 +42,7 @@ export function SiteFooter() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/brand/kineris-logo-dark.svg" alt="Kineris" className="h-9 w-auto" />
 
-          <TrustIconRow condensed />
+          <TrustIconRow items={SITE_TRUST} condensed centered />
 
           <p className="text-ink font-medium">For laboratory research use only. Not for human or veterinary use.</p>
           <nav className="flex flex-wrap gap-x-6 gap-y-2">
