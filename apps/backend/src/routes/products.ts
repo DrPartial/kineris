@@ -1,4 +1,4 @@
-import { checkCompliance } from '@kineris/shared'
+import { checkCompliance, PRODUCT_DISPLAY_ORDER, sortBySlugOrder } from '@kineris/shared'
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { prisma } from '../lib/prisma.ts'
@@ -51,7 +51,11 @@ export async function productRoutes(app: FastifyInstance) {
       include: { variants: true, batches: { where: { isCurrent: true }, take: 1 } },
       orderBy: { name: 'asc' },
     })
-    return products.map((p) => ({ ...p, currentBatch: p.batches[0] ?? null, batches: undefined }))
+    return sortBySlugOrder(products, PRODUCT_DISPLAY_ORDER).map((p) => ({
+      ...p,
+      currentBatch: p.batches[0] ?? null,
+      batches: undefined,
+    }))
   })
 
   app.get('/api/products/:slug', async (req, reply) => {

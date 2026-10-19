@@ -1,11 +1,15 @@
+import { BUNDLES, sortBySlugOrder } from '@kineris/shared'
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { availableBundleCount } from '../lib/bundleStock.ts'
 import { prisma } from '../lib/prisma.ts'
 import { requireAdmin } from '../lib/requireAuth.ts'
 
+// Bundles list in BUNDLES order, so the BPC-157 + TB-500 bundle leads.
+const BUNDLE_ORDER = BUNDLES.map((b) => b.slug)
+
 async function withAvailability(bundles: Awaited<ReturnType<typeof loadBundles>>) {
-  return bundles.map((b) => ({
+  return sortBySlugOrder(bundles, BUNDLE_ORDER).map((b) => ({
     ...b,
     availableCount: availableBundleCount(
       b.components.map((c) => ({ variantId: c.variantId, quantity: c.quantity, variantStock: c.variant.stock })),

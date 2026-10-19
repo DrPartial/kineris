@@ -170,6 +170,22 @@ export const LAB_SUPPLY_CATALOGUE: CatalogueEntry[] = [
 
 export const FULL_CATALOGUE: CatalogueEntry[] = [...PEPTIDE_CATALOGUE, ...LAB_SUPPLY_CATALOGUE]
 
+/**
+ * Storefront order, most popular first (UK search volume and competitor product-page
+ * traffic, market research 12 Oct). Bac water sits last as an add-on. Anything not
+ * listed (e.g. added in admin) follows alphabetically.
+ */
+export const PRODUCT_DISPLAY_ORDER = ['bpc-157', 'ghk-cu', 'tb-500', 'kpv', 'ss-31', 'bacteriostatic-water']
+
+/** Sorts listings by a slug order, unlisted ones last by name. */
+export function sortBySlugOrder<T extends { slug: string; name: string }>(items: T[], order: string[]): T[] {
+  const rank = (slug: string) => {
+    const i = order.indexOf(slug)
+    return i === -1 ? order.length : i
+  }
+  return [...items].sort((a, b) => rank(a.slug) - rank(b.slug) || a.name.localeCompare(b.name))
+}
+
 export function catalogueEntry(slug: string): CatalogueEntry | undefined {
   return FULL_CATALOGUE.find((e) => e.slug === slug)
 }
