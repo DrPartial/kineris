@@ -1,4 +1,6 @@
+import { showOnShopPage } from '@kineris/shared'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { BundleCard } from '@/components/BundleCard'
 import { ProductCard } from '@/components/ProductCard'
 import { fetchBundles, fetchProducts } from '@/lib/fetchers'
@@ -13,17 +15,15 @@ const CATEGORIES = [
   { value: 'lab_supply', label: 'Lab supplies' },
 ]
 
-export default async function ShopPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ category?: string }>
-}) {
+export default async function ShopPage({ searchParams }: { searchParams: Promise<{ category?: string }> }) {
   const { category = 'all' } = await searchParams
+  if (category === 'lab_supply') redirect('/lab-supplies')
   const [products, bundles] = await Promise.all([fetchProducts(), fetchBundles()])
 
+  // "All" is the peptides, bac water and the storage case; the rest of the lab equipment is on /lab-supplies.
   const filteredProducts =
     category === 'all'
-      ? products
+      ? products.filter(showOnShopPage)
       : category === 'bundle'
         ? []
         : products.filter((p) => p.category === category)
@@ -39,7 +39,9 @@ export default async function ShopPage({
         {CATEGORIES.map((c) => (
           <Link
             key={c.value}
-            href={c.value === 'all' ? '/shop' : `/shop?category=${c.value}`}
+            href={
+              c.value === 'all' ? '/shop' : c.value === 'lab_supply' ? '/lab-supplies' : `/shop?category=${c.value}`
+            }
             className={`rounded-full border px-4 py-1.5 text-sm no-underline ${
               category === c.value
                 ? 'border-accent bg-accent-soft text-accent'
@@ -60,7 +62,9 @@ export default async function ShopPage({
         </div>
       ) : (
         <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {category === 'all' && bundles[0] && <BundleCard bundle={bundles.find((b) => b.slug === 'bpc-157-tb-500-bundle') ?? bundles[0]} />}
+          {category === 'all' && bundles[0] && (
+            <BundleCard bundle={bundles.find((b) => b.slug === 'bpc-157-tb-500-bundle') ?? bundles[0]} />
+          )}
           {filteredProducts.map((p) => (
             <ProductCard key={p.id} product={p} />
           ))}

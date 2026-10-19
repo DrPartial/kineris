@@ -1,3 +1,4 @@
+import { showOnHomepage } from '@kineris/shared'
 import Image from 'next/image'
 import Link from 'next/link'
 import { BundleCard } from '@/components/BundleCard'
@@ -97,7 +98,9 @@ const h2 =
   'text-balance font-display text-3xl font-bold leading-[1.08] tracking-[-0.02em] text-ink sm:text-4xl lg:text-5xl'
 
 export default async function HomePage() {
-  const [products, bundles, stats] = await Promise.all([fetchProducts(), fetchBundles(), fetchStats()])
+  const [allProducts, bundles, stats] = await Promise.all([fetchProducts(), fetchBundles(), fetchStats()])
+  // Peptides and bac water only: lab equipment lives on the shop and Lab Supplies pages.
+  const products = allProducts.filter(showOnHomepage)
   const peptides = products.filter((p) => p.category === 'peptide')
   const leadBundle = bundles.find((b) => b.slug === 'bpc-157-tb-500-bundle') ?? bundles[0] ?? null
   const compoundCount = stats?.compoundCount ?? peptides.length

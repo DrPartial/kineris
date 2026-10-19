@@ -8,8 +8,9 @@ import { useOverlay } from '@/contexts/OverlayContext'
 // Nav labels are neutral/factual per pack section 7 ("avoid category names
 // that describe effects"), the same rule the product categories follow.
 const NAV_LINKS = [
-  { href: '/shop', label: 'Shop' },
+  { href: '/shop', label: 'Shop Peptides' },
   { href: '/shop?category=bundle', label: 'Bundles' },
+  { href: '/lab-supplies', label: 'Lab Supplies' },
   { href: '/quality', label: 'Lab Testing & CoAs' },
   { href: '/faq', label: 'FAQ' },
   { href: '/about', label: 'About' },

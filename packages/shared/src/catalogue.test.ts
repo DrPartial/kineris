@@ -1,16 +1,27 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { BUNDLES, bundleSavings, bundleSinglesTotalMinorUnits, FULL_CATALOGUE, type PricedCartLine } from './catalogue.ts'
+import {
+  BUNDLES,
+  bundleSavings,
+  bundleSinglesTotalMinorUnits,
+  FULL_CATALOGUE,
+  type PricedCartLine,
+  PRODUCT_DISPLAY_ORDER,
+  showOnHomepage,
+  showOnLabSuppliesPage,
+} from './catalogue.ts'
 import { checkCompliance } from './compliance.ts'
 
 const price = (slug: string) => FULL_CATALOGUE.find((e) => e.slug === slug)!.variants[0]!.priceMinorUnits
 const line = (slug: string, size: string, quantity: number): PricedCartLine => ({ slug, size, quantity, unitPriceMinorUnits: price(slug) })
 
-test('the launch range is the 6 SKU catalogue', () => {
+test('the launch range is the 6 SKU catalogue plus lab equipment', () => {
   assert.deepEqual(
-    FULL_CATALOGUE.map((e) => e.slug),
+    FULL_CATALOGUE.filter(showOnHomepage).map((e) => e.slug),
     ['bpc-157', 'tb-500', 'ghk-cu', 'kpv', 'ss-31', 'bacteriostatic-water'],
   )
+  assert.deepEqual(FULL_CATALOGUE.filter(showOnLabSuppliesPage).length, 7)
+  assert.ok(FULL_CATALOGUE.every((e) => PRODUCT_DISPLAY_ORDER.includes(e.slug)))
 })
 
 test('product copy passes the compliance word check', () => {

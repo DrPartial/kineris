@@ -1,6 +1,7 @@
 /**
  * Kineris's launch range: the 6-product Tissue & Repair catalogue Sean chose
- * for the MVP (October 2026), and only this range. Prices are GBP inc. VAT.
+ * for the MVP (October 2026), plus lab equipment for the Lab Supplies page.
+ * Prices are GBP inc. VAT.
  *
  * Descriptions are factual and compound-specific: what each substance is and
  * how it's classified, never an effect, benefit, or application claim, and
@@ -23,8 +24,8 @@ export interface CatalogueVariant {
 
 export interface CatalogueSpecs {
   casNumber: string | null
-  molecularFormula: string
-  molecularWeight: string
+  molecularFormula: string | null
+  molecularWeight: string | null
   sequence: string | null
   /** Shown as the product's "Form" (appearance of the supplied material). */
   form: string
@@ -166,16 +167,181 @@ export const LAB_SUPPLY_CATALOGUE: CatalogueEntry[] = [
     },
     variants: [{ size: '10ml', priceMinorUnits: 595, launchStock: 110 }],
   },
+  // Lab equipment, modelled on UK Peptides' lab supplies range and priced £1 under it (sourcing sheet,
+  // catalogue/lab-supplies). Opening stock is the planned first buy. No syringes, pens or syringe filters.
+  {
+    slug: 'peptide-storage-case',
+    name: 'Peptide storage case',
+    synonyms: ['Vial storage case'],
+    category: 'lab_supply',
+    researchArea: 'Lab supply',
+    description:
+      'Padded zip case with elasticated slots for twenty research vials and three larger slots for 10ml vials, for keeping vials organised and upright in a laboratory fridge.',
+    specs: {
+      casNumber: null,
+      molecularFormula: null,
+      molecularWeight: null,
+      sequence: null,
+      form: 'Padded nylon zip case, 20 vial slots plus 3 x 10ml slots',
+      purity: null,
+      storageConditions: 'Keep clean and dry. Suitable for use in a laboratory fridge at 2-8 °C.',
+    },
+    variants: [{ size: '1 case', priceMinorUnits: 1895, launchStock: 30 }],
+  },
+  {
+    slug: 'sterile-vials-10ml',
+    name: 'Sterile 10ml vials',
+    synonyms: ['Empty sterile serum vials'],
+    category: 'lab_supply',
+    researchArea: 'Lab supply',
+    description:
+      'Empty sterile 10ml serum vials in high-quality borosilicate glass, sealed with a rubber stopper and aluminium flip-off cap, for sample storage and aliquoting in the laboratory.',
+    specs: {
+      casNumber: null,
+      molecularFormula: null,
+      molecularWeight: null,
+      sequence: null,
+      form: 'Clear borosilicate glass vial, sealed and sterile',
+      purity: null,
+      storageConditions: 'Store sealed at room temperature, away from direct sunlight.',
+    },
+    variants: [
+      { size: '5 pack', priceMinorUnits: 1400, launchStock: 4 },
+      { size: '10 pack', priceMinorUnits: 2400, launchStock: 3 },
+    ],
+  },
+  {
+    slug: 'vial-stopper-cap-kit',
+    name: 'Vials, stoppers and caps kit',
+    synonyms: [],
+    category: 'lab_supply',
+    researchArea: 'Lab supply',
+    description:
+      'Ten clear 10ml glass vials with 20mm rubber stoppers and aluminium flip-off caps, supplied non-sterile. Sealing the caps needs a 20mm vial crimper (not included).',
+    specs: {
+      casNumber: null,
+      molecularFormula: null,
+      molecularWeight: null,
+      sequence: null,
+      form: '10 x 10ml glass vials, 10 x 20mm stoppers, 10 x flip-off caps',
+      purity: null,
+      storageConditions: 'Store at room temperature in the original packaging.',
+    },
+    variants: [{ size: '10 sets', priceMinorUnits: 1400, launchStock: 10 }],
+  },
+  {
+    slug: 'amber-dropper-bottles-10ml',
+    name: 'Amber glass dropper bottles 10ml',
+    synonyms: [],
+    category: 'lab_supply',
+    researchArea: 'Lab supply',
+    description:
+      'Five empty 10ml amber glass bottles with dropper caps, for storing light-sensitive laboratory reagents. Supplied empty and non-sterile.',
+    specs: {
+      casNumber: null,
+      molecularFormula: null,
+      molecularWeight: null,
+      sequence: null,
+      form: 'Amber glass bottle with glass dropper cap',
+      purity: null,
+      storageConditions: 'Store at room temperature.',
+    },
+    variants: [{ size: '5 pack', priceMinorUnits: 895, launchStock: 8 }],
+  },
+  {
+    slug: 'petri-dishes-90mm',
+    name: 'Petri dishes 90mm',
+    synonyms: [],
+    category: 'lab_supply',
+    researchArea: 'Lab supply',
+    description: 'Sterile 90mm polystyrene petri dishes with single-vent lids, for laboratory culture and sample work.',
+    specs: {
+      casNumber: null,
+      molecularFormula: null,
+      molecularWeight: null,
+      sequence: null,
+      form: 'Clear polystyrene dish and vented lid, sterile',
+      purity: null,
+      storageConditions: 'Store sealed at room temperature.',
+    },
+    variants: [{ size: '10 pack', priceMinorUnits: 1295, launchStock: 10 }],
+  },
+  {
+    slug: 'glass-beaker-set',
+    name: 'Glass beaker set 5-100ml',
+    synonyms: [],
+    category: 'lab_supply',
+    researchArea: 'Lab supply',
+    description: 'Five graduated borosilicate glass beakers from 5ml to 100ml, for measuring and mixing in the laboratory.',
+    specs: {
+      casNumber: null,
+      molecularFormula: null,
+      molecularWeight: null,
+      sequence: null,
+      form: 'Graduated borosilicate glass, 5 pieces',
+      purity: null,
+      storageConditions: 'Store clean and dry at room temperature.',
+    },
+    variants: [{ size: '5 pieces', priceMinorUnits: 1895, launchStock: 3 }],
+  },
+  {
+    slug: 'glass-dropper-pipettes',
+    name: 'Glass dropper pipettes',
+    synonyms: [],
+    category: 'lab_supply',
+    researchArea: 'Lab supply',
+    description:
+      'Ten glass dropper pipettes with rubber bulbs, in sizes from 0.5ml to 3ml, for transferring small volumes of liquid in the laboratory.',
+    specs: {
+      casNumber: null,
+      molecularFormula: null,
+      molecularWeight: null,
+      sequence: null,
+      form: 'Glass pipette with rubber bulb, set of 10',
+      purity: null,
+      storageConditions: 'Store clean and dry at room temperature.',
+    },
+    variants: [{ size: 'Set of 10', priceMinorUnits: 3395, launchStock: 2 }],
+  },
 ]
 
 export const FULL_CATALOGUE: CatalogueEntry[] = [...PEPTIDE_CATALOGUE, ...LAB_SUPPLY_CATALOGUE]
 
 /**
  * Storefront order, most popular first (UK search volume and competitor product-page
- * traffic, market research 12 Oct). Bac water sits last as an add-on. Anything not
- * listed (e.g. added in admin) follows alphabetically.
+ * traffic, market research 12 Oct). Bac water sits after the peptides as an add-on, then
+ * lab equipment in UK Peptides' bestseller order. Anything not listed (e.g. added in
+ * admin) follows alphabetically.
  */
-export const PRODUCT_DISPLAY_ORDER = ['bpc-157', 'ghk-cu', 'tb-500', 'kpv', 'ss-31', 'bacteriostatic-water']
+export const PRODUCT_DISPLAY_ORDER = [
+  'bpc-157',
+  'ghk-cu',
+  'tb-500',
+  'kpv',
+  'ss-31',
+  'bacteriostatic-water',
+  'peptide-storage-case',
+  'sterile-vials-10ml',
+  'vial-stopper-cap-kit',
+  'amber-dropper-bottles-10ml',
+  'petri-dishes-90mm',
+  'glass-beaker-set',
+  'glass-dropper-pipettes',
+]
+
+/**
+ * Where each listing appears. Bac water is a lab_supply but sells with the peptides (as
+ * UK Peptides does with its mixing water), so it shows on the homepage and shop, not the
+ * Lab Supplies page. The storage case is on both the shop and Lab Supplies pages, never
+ * the homepage. Other lab equipment is on the Lab Supplies page only.
+ */
+export const PEPTIDE_ADDON_SLUGS = ['bacteriostatic-water']
+export const SHOP_FEATURED_LAB_SUPPLY_SLUGS = ['peptide-storage-case']
+
+type Listing = { slug: string; category: string }
+export const showOnHomepage = (p: Listing) => p.category === 'peptide' || PEPTIDE_ADDON_SLUGS.includes(p.slug)
+export const showOnShopPage = (p: Listing) => showOnHomepage(p) || SHOP_FEATURED_LAB_SUPPLY_SLUGS.includes(p.slug)
+export const showOnLabSuppliesPage = (p: Listing) => p.category === 'lab_supply' && !PEPTIDE_ADDON_SLUGS.includes(p.slug)
 
 /** Sorts listings by a slug order, unlisted ones last by name. */
 export function sortBySlugOrder<T extends { slug: string; name: string }>(items: T[], order: string[]): T[] {
