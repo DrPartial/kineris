@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { BundleCard } from '@/components/BundleCard'
 import { LabListSignup } from '@/components/home/LabListSignup'
 import { Reveal } from '@/components/home/Reveal'
+import { ShopAllCard } from '@/components/home/ShopAllCard'
 import { ProductCard } from '@/components/ProductCard'
 import { StatCounter } from '@/components/StatCounter'
 import { TrustIconRow } from '@/components/TrustIconRow'
@@ -243,6 +244,12 @@ export default async function HomePage() {
                   <ProductCard product={p} />
                 </Reveal>
               ))}
+              {/* Fill an incomplete last row with a quiet link to the full shop. */}
+              {((leadBundle ? 1 : 0) + products.length) % 4 !== 0 && (
+                <Reveal delay={(((leadBundle ? 1 : 0) + products.length) % 4) * 80} className="h-full">
+                  <ShopAllCard />
+                </Reveal>
+              )}
             </div>
           </div>
         </section>
