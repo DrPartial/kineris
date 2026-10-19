@@ -14,6 +14,7 @@ import { dashboardRoutes } from './routes/dashboard.ts'
 import { discountRoutes } from './routes/discounts.ts'
 import { orderRoutes } from './routes/orders.ts'
 import { productRoutes } from './routes/products.ts'
+import { usesBlobStorage } from './lib/storage.ts'
 import { statsRoutes } from './routes/stats.ts'
 import { welcomeRoutes } from './routes/welcome.ts'
 
@@ -25,10 +26,13 @@ const ADMIN_ORIGIN = process.env.ADMIN_ORIGIN ?? 'http://localhost:3002'
 await app.register(cors, { origin: [WEB_ORIGIN, ADMIN_ORIGIN], credentials: true })
 await app.register(cookie)
 await app.register(multipart)
-await app.register(staticFiles, {
-  root: path.resolve(import.meta.dirname, '../uploads'),
-  prefix: '/uploads/',
-})
+// Local-disk uploads are only served in dev; hosted CoA files live in Vercel Blob (see lib/storage.ts).
+if (!usesBlobStorage) {
+  await app.register(staticFiles, {
+    root: path.resolve(import.meta.dirname, '../uploads'),
+    prefix: '/uploads/',
+  })
+}
 // global: false means nothing is rate-limited by default; only routes that
 // opt in via `config: { rateLimit: {...} }` are affected -- applied to the
 // order-status lookup, welcome-signup, and discount-validate endpoints

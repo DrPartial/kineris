@@ -17,7 +17,17 @@ const prisma = new PrismaClient()
 const SAMPLE_COA_SOURCE = path.resolve(import.meta.dirname, 'fixtures/sample-coa.pdf')
 const UPLOAD_DIR = path.resolve(import.meta.dirname, '../uploads/coa')
 
+// Hosted databases are different from local dev: nobody should wipe them or fill them with demo
+// figures by accident. Against anything that is not localhost the seed refuses to run without
+// SEED_CONFIRM_REMOTE=yes, never deletes orders unless SEED_RESET_ORDERS=yes, never attaches the
+// sample CoA, and only creates an admin from ADMIN_EMAIL + ADMIN_PASSWORD (there is no default password).
+const IS_LOCAL_DB = /localhost|127\.0\.0\.1/.test(process.env.DATABASE_URL ?? '')
+
 async function main() {
+  if (!IS_LOCAL_DB && process.env.SEED_CONFIRM_REMOTE !== 'yes') {
+    throw new Error('DATABASE_URL is not local. Set SEED_CONFIRM_REMOTE=yes to seed a hosted database.')
+  }
+  const resetOrders = IS_LOCAL_DB || process.env.SEED_RESET_ORDERS === 'yes'
   const liveSlugs = FULL_CATALOGUE.map((entry) => entry.slug)
 
   // Orders/back-in-stock requests referencing a pruned product or a stale
@@ -26,10 +36,12 @@ async function main() {
   // dev/seed data, never real customer orders, so it's safe to clear
   // unconditionally on every reseed rather than track exactly which rows
   // would conflict.
-  await prisma.order.deleteMany({})
-  await prisma.welcomeSubscriber.deleteMany({})
-  await prisma.discountCode.deleteMany({ where: { autoIssued: true } })
-  await prisma.backInStockRequest.deleteMany({})
+  if (resetOrders) {
+    await prisma.order.deleteMany({})
+    await prisma.welcomeSubscriber.deleteMany({})
+    await prisma.discountCode.deleteMany({ where: { autoIssued: true } })
+    await prisma.backInStockRequest.deleteMany({})
+  }
 
   const stale = await prisma.product.findMany({ where: { slug: { notIn: liveSlugs } }, select: { id: true, slug: true } })
   if (stale.length > 0) {
@@ -88,7 +100,7 @@ async function main() {
       // local dev -- every other batch is honestly CoA-pending until the
       // independent third-party CoAs are uploaded in admin.
       let coaFileUrl: string | null = null
-      if (index === 0) {
+      if (index === 0 && IS_LOCAL_DB) {
         await mkdir(UPLOAD_DIR, { recursive: true })
         const filename = `${randomUUID()}.pdf`
         await copyFile(SAMPLE_COA_SOURCE, path.join(UPLOAD_DIR, filename))
@@ -130,13 +142,20 @@ async function main() {
   }
   console.log(`Seeded ${BUNDLES.length} bundles.`)
 
-  const adminEmail = 'admin@kineris.local'
-  const existingAdmin = await prisma.adminUser.findUnique({ where: { email: adminEmail } })
-  if (!existingAdmin) {
-    await prisma.adminUser.create({
-      data: { email: adminEmail, passwordHash: await hashPassword('change-me-now') },
-    })
-    console.log(`Admin user created: ${adminEmail} / change-me-now (change this immediately)`)
+  // Local dev keeps the documented default login. A hosted database only gets an admin when one is
+  // supplied explicitly, so there is never a well-known password on a public API.
+  const adminEmail = IS_LOCAL_DB ? 'admin@kineris.local' : process.env.ADMIN_EMAIL
+  const adminPassword = IS_LOCAL_DB ? 'change-me-now' : process.env.ADMIN_PASSWORD
+  if (adminEmail && adminPassword) {
+    const existingAdmin = await prisma.adminUser.findUnique({ where: { email: adminEmail } })
+    if (!existingAdmin) {
+      await prisma.adminUser.create({
+        data: { email: adminEmail, passwordHash: await hashPassword(adminPassword) },
+      })
+      console.log(`Admin user created: ${adminEmail}${IS_LOCAL_DB ? ' / change-me-now (change this immediately)' : ''}`)
+    }
+  } else {
+    console.log('No admin user created (set ADMIN_EMAIL and ADMIN_PASSWORD to create one).')
   }
 
   const discountCode = await prisma.discountCode.findUnique({ where: { code: 'WELCOME10' } })

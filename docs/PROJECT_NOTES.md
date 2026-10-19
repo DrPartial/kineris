@@ -397,3 +397,28 @@ catalogue: BPC-157 5mg, TB-500 2mg, GHK-Cu 50mg, KPV 10mg, SS-31 10mg and bacter
 - **Not done here**: the first-order offer as a no-code A/B switch, and real (independent) CoA PDFs. The
   supplier's Janoshik placeholders were deliberately not committed, since this repo is public and they name
   the supplier.
+## Banner film (October 2026)
+
+A 23 s silent, text-free film made from eight object-only scenes (basalt, lab bench, label macro,
+frost and ice, levitating vial, overhead black glass, mirror-floor pedestals, monolith at sunrise),
+cut with a different transition per join and fading from/to black so it loops cleanly. Files in
+`apps/web/public/home/`: `banner-film-1080.mp4` (3.7 MB), `banner-film-720.mp4` (1.4 MB) and
+`banner-film-poster.webp`. The edit is reproducible from `tools/banner-film/` (see its README).
+
+- **Not wired into the page yet.** The live hero is still the single 8 s ice loop; the film is there
+  to try. Swapping it in is a two-constant change in `components/home/HeroVideo.tsx`.
+- Every scene was checked at 100% for label text. One real defect was found and trimmed out (a
+  droplet erasing a hyphen in the macro scene). The overhead scene's tiny "LYOPHILISED POWDER"
+  line is soft in motion, not misspelled.
+- The H.264 files were verified with ffprobe and frame extraction, not played back in a browser
+  (this sandbox's Chromium has no H.264), so give them one look in Chrome and Safari.
+
+## Hosting (Vercel) — pre-launch deployment
+
+- **Storefront** `kineris-web` → https://kineris-web.vercel.app (root `apps/web`). **API** `kineris-api` → https://kineris-api.vercel.app (root `apps/backend`, Fastify zero-config). Team `kineris`. Postgres is Neon (Vercel Marketplace, `kineris-db`); CoA PDFs go to Vercel Blob (`kineris-coa`, used automatically when `BLOB_READ_WRITE_TOKEN` is set, else local `uploads/`).
+- **Password gate:** the storefront is behind a password page while `SITE_PASSWORD` is set (Vercel env var on `kineris-web`; value is not in the repo). `apps/web/src/middleware.ts` + `app/gate/route.ts`. **To launch publicly: delete the `SITE_PASSWORD` variable and redeploy.** Vercel's own Deployment Protection is switched off on both projects (Password Protection is a paid add-on).
+- **API proxy:** with `NEXT_PUBLIC_API_SAME_ORIGIN=1` the browser calls same-origin `/api/*`, rewritten to `BACKEND_URL` (next.config.ts), so the session cookie is first-party. Server components call `BACKEND_URL` directly.
+- **API build** (`apps/backend/scripts/vercel-build.sh`): compiles `@kineris/shared` to JS in the build container only (Node can't load .ts from node_modules), `prisma generate`, `migrate deploy` on production builds only, optional one-off seed with `RUN_SEED=1` (remove after). The seed refuses hosted DBs without `SEED_CONFIRM_REMOTE=yes` and leaves purity/CoA empty (no real lab data yet).
+- **Env on `kineris-api`:** DATABASE_URL / DATABASE_URL_UNPOOLED (Neon), BLOB_READ_WRITE_TOKEN, SESSION_SECRET, WEB_ORIGIN, ADMIN_ORIGIN. Stripe keys not set yet. No admin user exists: set ADMIN_EMAIL + ADMIN_PASSWORD with `RUN_SEED=1` to create one.
+- **Admin** `kineris-admin` → https://kineris-admin.vercel.app (root `apps/admin`, same-origin `/api` proxy like the storefront; not behind the site password, it has its own login). The admin user was created via a one-off `RUN_SEED=1` build with `ADMIN_EMAIL`/`ADMIN_PASSWORD` set, then those vars were removed. Change the password after first login.
+- **Not set up yet:** custom domain (`kineris-web.vercel.app` is the free domain for now), Stripe keys.
