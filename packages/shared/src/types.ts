@@ -7,7 +7,9 @@
  * public ones these apps actually need).
  */
 
-export type ProductCategory = 'peptide' | 'bundle' | 'lab-supply'
+import { bundleDefinition } from './catalogue.ts'
+
+export type ProductCategory = 'peptide' | 'bundle' | 'lab_supply'
 
 export interface Product {
   id: string
@@ -76,8 +78,13 @@ export interface Bundle {
 }
 
 /** Sum of each component's own price times how many of it the bundle needs. */
-export function bundlePriceMinorUnits(bundle: Pick<Bundle, 'components'>): number {
+export function bundleSinglesPriceMinorUnits(bundle: Pick<Bundle, 'components'>): number {
   return bundle.components.reduce((sum, c) => sum + c.variant.priceMinorUnits * c.quantity, 0)
+}
+
+/** The bundle's fixed price from BUNDLES, or the singles total for a bundle created only in admin. */
+export function bundlePriceMinorUnits(bundle: Pick<Bundle, 'slug' | 'components'>): number {
+  return bundleDefinition(bundle.slug)?.priceMinorUnits ?? bundleSinglesPriceMinorUnits(bundle)
 }
 
 export interface CartLine {
@@ -136,7 +143,7 @@ export type DiscountValidationResult =
   | { valid: true; discountCodeId: string; discountAmountMinorUnits: number }
   | { valid: false; reason: DiscountFailureReason; message: string }
 
-/** Placeholder, non-carrier-integrated shipping choices, pack section 6 is OPEN on exact pricing. */
+/** Royal Mail shipping choices (flat prices, not a live Click & Drop rate lookup). */
 export interface ShippingOption {
   id: string
   label: string

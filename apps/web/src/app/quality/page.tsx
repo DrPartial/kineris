@@ -3,7 +3,7 @@ import { CoaLookupForm } from '@/components/CoaLookupForm'
 import { fetchCoas } from '@/lib/fetchers'
 
 export const metadata = {
-  title: 'Quality & Certificates of Analysis | Kineris Labs',
+  title: 'Lab Testing & Certificates of Analysis | Kineris Labs',
   description: 'Look up a Certificate of Analysis by batch number, or browse recently tested batches.',
 }
 
@@ -14,7 +14,7 @@ const FAQ = [
   },
   {
     q: 'How do I read a Certificate of Analysis?',
-    a: 'A CoA for a Kineris batch shows the batch/lot number, the purity reported for that batch, and the date it was reported. Download the linked PDF for the full report.',
+    a: 'A CoA for a Kineris batch shows the batch/lot number, the purity measured by HPLC for that batch, the testing laboratory, and the date it was tested. Download the linked PDF for the full report.',
   },
   {
     q: 'How do I look up a batch?',
@@ -36,22 +36,17 @@ export default async function QualityPage({
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="text-2xl font-semibold tracking-tight text-ink">Quality &amp; Certificates of Analysis</h1>
+      <h1 className="text-2xl font-semibold tracking-tight text-ink">Lab Testing &amp; Certificates of Analysis</h1>
       <p className="mt-3 max-w-xl text-ink-muted">
-        Every batch we supply is assigned its own batch number and Certificate of Analysis. Look
-        up any batch below, or browse what's recently been tested.
-      </p>
-
-      <p className="mt-4 text-sm text-ink-hint">
-        [Placeholder: whether CoAs are issued by an independent UK/EU testing lab or by the
-        supplier is still being decided; this section will state the actual process once
-        confirmed, per the project instruction pack.]
+        Every batch we supply is independently tested by a third-party laboratory for purity (HPLC) and identity, and
+        is assigned its own batch number and Certificate of Analysis. Look up any batch below, or browse the current
+        certificates.
       </p>
 
       <h2 className="mt-10 mb-3 text-lg font-semibold text-ink">Look up a Certificate of Analysis</h2>
       <CoaLookupForm initialBatchNumber={batch} />
 
-      <h2 className="mt-12 mb-4 text-lg font-semibold text-ink">Recent CoAs</h2>
+      <h2 className="mt-12 mb-4 text-lg font-semibold text-ink">Current CoAs</h2>
       {coas.length > 0 ? (
         <div className="grid gap-4 sm:grid-cols-2">
           {coas.map((c) => (

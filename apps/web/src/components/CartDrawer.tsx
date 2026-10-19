@@ -3,40 +3,14 @@
 import type { Product } from '@kineris/shared'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { CartAddOn, CartTotalsBlock, FreeShippingProgress } from './CartTotals'
 import { Modal } from './Modal'
 import { ProductImage } from './ProductImage'
 import { useCart } from '@/contexts/CartContext'
 import { useOverlay } from '@/contexts/OverlayContext'
 import { api } from '@/lib/api'
+import { priceCart, resolveVariants, type ResolvedVariant } from '@/lib/cartPricing'
 import { formatGBP } from '@/lib/money'
-
-interface ResolvedVariant {
-  variantId: string
-  productSlug: string
-  productName: string
-  molecularFormula: string | null
-  size: string
-  priceMinorUnits: number
-  stock: number
-}
-
-function resolveVariants(products: Product[]): Map<string, ResolvedVariant> {
-  const map = new Map<string, ResolvedVariant>()
-  for (const p of products) {
-    for (const v of p.variants) {
-      map.set(v.id, {
-        variantId: v.id,
-        productSlug: p.slug,
-        productName: p.name,
-        molecularFormula: p.molecularFormula,
-        size: v.size,
-        priceMinorUnits: v.priceMinorUnits,
-        stock: v.stock,
-      })
-    }
-  }
-  return map
-}
 
 /**
  * The cart as a right-side drawer, the primary way to review/edit it without
@@ -59,10 +33,8 @@ export function CartDrawer() {
     setOpenOverlay(null)
   }
 
-  const resolvedLines = lines
-    .map((l) => ({ line: l, variant: variantMap.get(l.variantId) }))
-    .filter((r): r is { line: typeof lines[number]; variant: ResolvedVariant } => r.variant !== undefined)
-  const subtotal = resolvedLines.reduce((sum, r) => sum + r.variant.priceMinorUnits * r.line.quantity, 0)
+  const pricing = priceCart(lines, variantMap)
+  const resolvedLines = pricing.resolved
 
   return (
     <Modal open={open} onClose={close} label="Cart" align="right">
@@ -136,22 +108,21 @@ export function CartDrawer() {
         </div>
 
         {resolvedLines.length > 0 && (
-          <div className="border-t border-border p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-ink-muted">Subtotal</span>
-              <span className="data-figure text-lg font-semibold text-ink">{formatGBP(subtotal)}</span>
-            </div>
+          <div className="space-y-4 border-t border-border p-4">
+            <FreeShippingProgress pricing={pricing} />
+            <CartAddOn pricing={pricing} variants={variantMap} />
+            <CartTotalsBlock pricing={pricing} />
             <Link
               href="/checkout"
               onClick={close}
-              className="mt-4 block rounded-sm bg-accent px-5 py-3 text-center text-sm font-medium text-bone no-underline hover:bg-accent-hover"
+              className="block rounded-sm bg-accent px-5 py-3 text-center text-sm font-medium text-bone no-underline hover:bg-accent-hover"
             >
               Proceed to checkout
             </Link>
             <Link
               href="/cart"
               onClick={close}
-              className="mt-3 block text-center text-xs text-ink-hint no-underline hover:text-ink"
+              className="-mt-1 block text-center text-xs text-ink-hint no-underline hover:text-ink"
             >
               View full cart
             </Link>

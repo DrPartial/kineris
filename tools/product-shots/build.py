@@ -130,9 +130,9 @@ html, body {{ width: {W}px; height: {H}px; background: {BONE}; overflow: hidden;
 </script></body></html>"""
 
 
-def render_label(chrome, tmp: Path, key, name_lines, sub, strength) -> Image.Image:
+def render_label(chrome, tmp: Path, key, name_lines, sub, strength, eyebrow="Lyophilised powder") -> Image.Image:
     html_path, png_path = tmp / f"{key}.html", tmp / f"{key}.png"
-    html_path.write_text(label_html(name_lines, sub, strength), encoding="utf-8")
+    html_path.write_text(label_html(name_lines, sub, strength, eyebrow=eyebrow), encoding="utf-8")
     subprocess.run(
         [chrome, "--headless=new", "--no-sandbox", "--disable-gpu", "--hide-scrollbars",
          "--allow-file-access-from-files", "--force-device-scale-factor=1",
@@ -220,7 +220,8 @@ def main(only):
         for p in products:
             for size in p["sizes"]:
                 key = f"{p['slug']}-{size}"
-                art = render_label(chrome, tmp, key, p["name"], p["sub"], strength_label(size))
+                art = render_label(chrome, tmp, key, p["name"], p["sub"], strength_label(size),
+                                   p.get("eyebrow", "Lyophilised powder"))
                 img = Image.fromarray(wrap(plate, art).astype(np.uint8)).crop(CROP)
                 img = img.resize((OUT_SIZE, OUT_SIZE), Image.LANCZOS)
                 img = feather_bottom(img)

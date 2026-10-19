@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { BundleCard } from '@/components/BundleCard'
 import { ProductCard } from '@/components/ProductCard'
 import { fetchBundles, fetchProducts } from '@/lib/fetchers'
 
@@ -9,7 +10,7 @@ const CATEGORIES = [
   { value: 'all', label: 'All products' },
   { value: 'peptide', label: 'Peptides' },
   { value: 'bundle', label: 'Bundles' },
-  { value: 'lab-supply', label: 'Lab supplies' },
+  { value: 'lab_supply', label: 'Lab supplies' },
 ]
 
 export default async function ShopPage({
@@ -29,7 +30,10 @@ export default async function ShopPage({
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
-      <h1 className="text-2xl font-semibold tracking-tight text-ink">Shop</h1>
+      <h1 className="text-2xl font-semibold tracking-tight text-ink">Tissue &amp; Repair research peptides</h1>
+      <p className="mt-2 max-w-2xl text-sm text-ink-muted">
+        Every batch independently third-party tested, with a Certificate of Analysis. For laboratory research use only.
+      </p>
 
       <nav className="mt-6 flex flex-wrap gap-2">
         {CATEGORIES.map((c) => (
@@ -50,24 +54,13 @@ export default async function ShopPage({
       {category === 'bundle' ? (
         <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {bundles.map((b) => (
-            <Link
-              key={b.id}
-              href={`/bundles/${b.slug}`}
-              className="rounded-sm border border-border bg-surface p-4 no-underline hover:border-accent"
-            >
-              <div className="mb-3 flex aspect-square items-center justify-center rounded-sm bg-surface-sunken text-xs text-ink-hint">
-                Bundle
-              </div>
-              <h3 className="text-sm font-medium text-ink">{b.name}</h3>
-              <p className="mt-1 text-xs text-ink-hint">
-                {b.availableCount > 0 ? `${b.availableCount} available` : 'Out of stock'}
-              </p>
-            </Link>
+            <BundleCard key={b.id} bundle={b} />
           ))}
           {bundles.length === 0 && <p className="text-sm text-ink-muted">No bundles available right now.</p>}
         </div>
       ) : (
         <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          {category === 'all' && bundles[0] && <BundleCard bundle={bundles.find((b) => b.slug === 'bpc-157-tb-500-bundle') ?? bundles[0]} />}
           {filteredProducts.map((p) => (
             <ProductCard key={p.id} product={p} />
           ))}

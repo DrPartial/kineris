@@ -1,8 +1,11 @@
+import { BUNDLES, bundleSinglesTotalMinorUnits, catalogueEntry } from '@kineris/shared'
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { AddToCartForm } from '@/components/AddToCartForm'
+import { AddToCartForm, type PackOption } from '@/components/AddToCartForm'
 import { Badge } from '@/components/Badge'
 import { COACard } from '@/components/COACard'
+import { DispatchCountdown } from '@/components/DispatchCountdown'
 import { ProductCard } from '@/components/ProductCard'
 import { Tabs } from '@/components/Tabs'
 import { TrustIconRow } from '@/components/TrustIconRow'
@@ -15,7 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const product = await fetchProduct(slug)
   if (!product) return {}
   const description =
-    product.description ?? `${product.name}, batch-tested, for laboratory research use only.`
+    product.description ?? `${product.name}, third-party tested, for laboratory research use only.`
   return {
     title: `${product.name} | Kineris Labs`,
     description,
@@ -28,11 +31,15 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const [product, allProducts] = await Promise.all([fetchProduct(slug), fetchProducts()])
   if (!product) notFound()
 
+  const entry = catalogueEntry(product.slug)
   const allDataFields: [string, string | null][] = [
+    ['Research area', entry?.researchArea ?? null],
     ['CAS number', product.casNumber],
     ['Molecular formula', product.molecularFormula],
     ['Molecular weight', product.molecularWeight],
-    ['Form', product.form],
+    ['Sequence', entry?.specs.sequence ?? null],
+    ['Appearance', product.form],
+    ['Purity (specification)', product.variants[0]?.purity ?? null],
     ['Storage conditions', product.storageConditions],
     ['Current batch', product.currentBatch?.batchNumber ?? null],
   ]
@@ -45,9 +52,25 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     product.variants[0]?.priceMinorUnits ?? 0,
   )
   const inStock = product.variants.some((v) => v.stock > 0)
-  const purity = product.variants[0]?.purity
+  // The tested figure from the current batch CoA when there is one, otherwise the general spec.
+  const batchPurity = product.currentBatch?.purity ?? null
+  const purity = batchPurity ?? product.variants[0]?.purity
+  const isPeptide = product.category === 'peptide'
 
-  const crossSell = allProducts.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4)
+  // Packs of this one vial (5-packs) go in the pack selector; mixed bundles that include it are linked below it.
+  const firstSize = product.variants[0]?.size
+  const packs: PackOption[] = BUNDLES.filter(
+    (b) => b.components.length === 1 && b.components[0]!.slug === product.slug && b.components[0]!.size === firstSize,
+  ).map((b) => ({
+    id: b.slug,
+    label: `${b.components[0]!.quantity}-pack`,
+    quantity: b.components[0]!.quantity,
+    priceMinorUnits: b.priceMinorUnits,
+    savingMinorUnits: bundleSinglesTotalMinorUnits(b) - b.priceMinorUnits,
+  }))
+  const mixedBundles = BUNDLES.filter((b) => b.components.length > 1 && b.components.some((c) => c.slug === product.slug))
+
+  const crossSell = allProducts.filter((p) => p.id !== product.id).slice(0, 4)
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -81,23 +104,54 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         />
 
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-ink">{product.name}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-ink">
+            {product.name}
+            {firstSize && <span className="font-normal text-ink-muted"> {firstSize}</span>}
+          </h1>
+          <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-accent">Research Use Only</p>
           {product.synonyms.length > 0 && (
             <p className="mt-1 text-sm text-ink-hint">Also known as: {product.synonyms.join(', ')}</p>
           )}
-          {product.description && <p className="mt-3 text-sm text-ink-muted">{product.description}</p>}
 
-          <div className="mt-3 flex items-center gap-3">
-            <span className="data-figure text-sm text-ink-muted">from {formatGBP(cheapest)}</span>
-            {purity && <Badge variant="verified">{purity} purity</Badge>}
-          </div>
+          {purity && (
+            <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
+              <Badge variant="verified">
+                {purity} purity{isPeptide ? (batchPurity ? ', third-party HPLC tested' : ' specification') : ''}
+              </Badge>
+              {isPeptide && (
+                <a href="#product-tabs" className="text-sm font-medium text-accent hover:text-accent-hover">
+                  View CoA
+                </a>
+              )}
+            </div>
+          )}
 
           <div className="mt-6 sticky bottom-0 z-10 -mx-4 border-t border-border bg-surface px-4 py-4 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0">
-            <AddToCartForm variants={product.variants} />
+            <AddToCartForm variants={product.variants} packs={packs} lowStockThreshold={product.lowStockThreshold} />
           </div>
+          <DispatchCountdown className="mt-3 text-sm text-ink-muted" />
+
+          {mixedBundles.length > 0 && (
+            <ul className="mt-4 space-y-1 text-sm">
+              {mixedBundles.map((b) => (
+                <li key={b.slug}>
+                  <Link href={`/bundles/${b.slug}`} className="text-accent no-underline hover:text-accent-hover">
+                    Also in the {b.name}, {formatGBP(b.priceMinorUnits)} (save{' '}
+                    {formatGBP(bundleSinglesTotalMinorUnits(b) - b.priceMinorUnits)}) &rarr;
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
 
           <div className="mt-6 border-t border-border pt-4">
-            <TrustIconRow />
+            <TrustIconRow
+              items={[
+                ...(isPeptide ? [{ icon: 'check' as const, label: 'Independently third-party tested' }] : []),
+                { icon: 'truck', label: 'Dispatched from the UK' },
+                { icon: 'batch', label: 'Free tracked delivery over £100' },
+              ]}
+            />
           </div>
 
           <p className="mt-6 border-t border-border pt-4 text-xs text-ink-hint">
@@ -107,7 +161,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       </div>
       </VariantSelectionProvider>
 
-      <div className="mt-12">
+      <div id="product-tabs" className="mt-12 scroll-mt-28">
         <Tabs
           items={[
             {
@@ -134,13 +188,20 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               ),
             },
             {
+              id: 'description',
+              label: 'Description',
+              content: <p className="max-w-2xl text-sm text-ink-muted">{product.description}</p>,
+            },
+            {
               id: 'shipping',
               label: 'Shipping & storage',
               content: (
                 <div className="space-y-3 text-sm text-ink-muted">
                   {product.storageConditions && <p>{product.storageConditions}</p>}
                   <p>
-                    UK addresses only, via Royal Mail Tracked. See the{' '}
+                    UK addresses only, via Royal Mail: Tracked 48 £3.95 (free over £100), Tracked 24 £4.95, or Special
+                    Delivery guaranteed by 1pm £10.95. Orders placed by 2.30pm Monday to Friday are dispatched the same
+                    day. See the{' '}
                     <a href="/legal/shipping" className="text-accent hover:text-accent-hover">
                       Shipping Policy
                     </a>{' '}
@@ -161,7 +222,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                     },
                     {
                       q: 'Where is the Certificate of Analysis for this batch?',
-                      a: 'See the Certificate of Analysis tab above. Every batch can also be looked up directly on the Quality & CoAs page.',
+                      a: 'See the Certificate of Analysis tab above. Every batch can also be looked up directly on the Lab Testing & CoAs page.',
                     },
                     {
                       q: 'What if no CoA is listed yet for this batch?',
@@ -180,9 +241,18 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         />
       </div>
 
+      <div className="mt-10 rounded-md border border-border bg-surface-sunken p-4 text-sm text-ink">
+        <p className="font-semibold">Research Use Only</p>
+        <p className="mt-1 text-ink-muted">
+          This product is supplied for in-vitro laboratory research only. It is not a medicine, food, supplement or
+          cosmetic, and is not for human or veterinary use of any kind. By ordering you confirm it will be used only by
+          suitably qualified people in a lawful research setting.
+        </p>
+      </div>
+
       {crossSell.length > 0 && (
         <div className="mt-12 border-t border-border pt-10">
-          <h2 className="mb-6 text-lg font-semibold text-ink">You may also like</h2>
+          <h2 className="mb-6 text-lg font-semibold text-ink">Also in the range</h2>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             {crossSell.map((p) => (
               <ProductCard key={p.id} product={p} />

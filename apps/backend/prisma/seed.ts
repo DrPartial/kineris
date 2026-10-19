@@ -1,7 +1,6 @@
 /**
- * Seeds local dev with Kineris's real 16-product launch range from
- * packages/shared/src/catalogue.ts (this and only this, confirmed by
- * Harvey). Safe to re-run: products are upserted by slug, and anything in
+ * Seeds the database with Kineris's 6-product launch range and its bundles
+ * from packages/shared/src/catalogue.ts (this and only this). Safe to re-run: products are upserted by slug, and anything in
  * the database that isn't in that range is pruned first, along with its
  * dependent test orders, so a stray product from an earlier placeholder
  * pass never lingers.
@@ -9,7 +8,7 @@
 import { randomUUID } from 'node:crypto'
 import { copyFile, mkdir } from 'node:fs/promises'
 import path from 'node:path'
-import { FULL_CATALOGUE } from '@kineris/shared'
+import { BUNDLES, FULL_CATALOGUE } from '@kineris/shared'
 import { PrismaClient } from '@prisma/client'
 import { hashPassword } from '../src/lib/auth.ts'
 
@@ -41,35 +40,21 @@ async function main() {
   console.log(`Seeding ${FULL_CATALOGUE.length} products (Kineris's real launch range)...`)
 
   for (const [index, entry] of FULL_CATALOGUE.entries()) {
+    const specs = {
+      name: entry.name,
+      description: entry.description,
+      synonyms: entry.synonyms,
+      category: entry.category,
+      casNumber: entry.specs.casNumber,
+      molecularFormula: entry.specs.molecularFormula,
+      molecularWeight: entry.specs.molecularWeight,
+      form: entry.specs.form,
+      storageConditions: entry.specs.storageConditions,
+    }
     const product = await prisma.product.upsert({
       where: { slug: entry.slug },
-      update: {
-        name: entry.name,
-        description: entry.description,
-        synonyms: entry.synonyms,
-        // Explicitly nulled, not just omitted: a product carried over from
-        // an earlier placeholder seed could still have a fake CAS/formula/
-        // weight sitting in the database, and upsert's update clause only
-        // touches fields it's given, so leaving these out here would let a
-        // stale fake value survive silently.
-        casNumber: null,
-        molecularFormula: null,
-        molecularWeight: null,
-      },
-      create: {
-        slug: entry.slug,
-        name: entry.name,
-        description: entry.description,
-        synonyms: entry.synonyms,
-        category: 'peptide',
-        // CAS number / molecular formula / molecular weight deliberately
-        // left unset -- see catalogue.ts's own doc comment on why these
-        // need real supplier/CoA data, not a guess.
-        form: 'Lyophilised powder',
-        storageConditions: 'Store at -20°C, protect from light',
-        published: true,
-        lowStockThreshold: 5,
-      },
+      update: specs,
+      create: { slug: entry.slug, ...specs, published: true, lowStockThreshold: 5 },
     })
 
     // A product kept across catalogue updates can still carry stale sizes
@@ -82,13 +67,16 @@ async function main() {
     for (const variant of entry.variants) {
       await prisma.productVariant.upsert({
         where: { productId_size: { productId: product.id, size: variant.size } },
-        update: { priceMinorUnits: variant.priceMinorUnits },
+        // Stock is reset to the launch quantities on every seed: like the
+        // order wipe above, this script is for setting up a pre-launch
+        // database, never for one that holds real stock.
+        update: { priceMinorUnits: variant.priceMinorUnits, purity: entry.specs.purity, stock: variant.launchStock },
         create: {
           productId: product.id,
           size: variant.size,
           priceMinorUnits: variant.priceMinorUnits,
-          purity: '≥98% (HPLC)',
-          stock: 25,
+          purity: entry.specs.purity,
+          stock: variant.launchStock,
         },
       })
     }
@@ -97,9 +85,8 @@ async function main() {
     if (!hasCurrentBatch) {
       // Only the very first product gets the watermarked sample CoA PDF
       // attached, purely so the fully-populated CoA card UI is visible in
-      // local dev -- every other batch is honestly CoA-pending, matching
-      // where a real launch actually starts (pack 2.5 is OPEN on the testing
-      // lab; see docs/PROJECT_NOTES.md).
+      // local dev -- every other batch is honestly CoA-pending until the
+      // independent third-party CoAs are uploaded in admin.
       let coaFileUrl: string | null = null
       if (index === 0) {
         await mkdir(UPLOAD_DIR, { recursive: true })
@@ -112,14 +99,36 @@ async function main() {
         data: {
           productId: product.id,
           batchNumber: `KL-2026-${String(index + 1).padStart(3, '0')}`,
-          purity: '98.4%',
-          reportedAt: new Date(Date.now() - (index + 1) * 3 * 24 * 60 * 60 * 1000),
+          // Purity and test date come from the real CoA when it's uploaded, never invented here.
+          purity: null,
+          reportedAt: null,
           coaFileUrl,
           isCurrent: true,
         },
       })
     }
   }
+
+  // Bundles are recipes over the single vials above (pack 5); their fixed
+  // prices live in BUNDLES and are applied at checkout, not stored here.
+  const liveBundleSlugs = BUNDLES.map((b) => b.slug)
+  await prisma.bundle.deleteMany({ where: { slug: { notIn: liveBundleSlugs } } })
+  for (const def of BUNDLES) {
+    const components = await Promise.all(
+      def.components.map(async (c) => {
+        const variant = await prisma.productVariant.findFirstOrThrow({
+          where: { size: c.size, product: { slug: c.slug } },
+        })
+        return { variantId: variant.id, quantity: c.quantity }
+      }),
+    )
+    await prisma.bundle.upsert({
+      where: { slug: def.slug },
+      update: { name: def.name, published: true, components: { deleteMany: {}, create: components } },
+      create: { slug: def.slug, name: def.name, published: true, components: { create: components } },
+    })
+  }
+  console.log(`Seeded ${BUNDLES.length} bundles.`)
 
   const adminEmail = 'admin@kineris.local'
   const existingAdmin = await prisma.adminUser.findUnique({ where: { email: adminEmail } })

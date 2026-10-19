@@ -9,21 +9,38 @@
  */
 export const FAQ = [
   {
-    question: 'How long does dispatch take?',
-    answer: '[Placeholder: dispatch cut-off time and lead time to be confirmed by Sean and Connor.]',
-  },
-  {
-    question: 'Which shipping options do you offer?',
-    answer: 'UK addresses only at launch, via Royal Mail Tracked or Special Delivery options at checkout.',
-  },
-  {
-    question: 'How do I check my order status?',
-    answer: 'Use the Order Status page with your order number and the email used at checkout, or sign in to see your full order history.',
+    question: 'How are your peptides tested?',
+    answer:
+      'Every batch is tested by an independent third-party laboratory for purity (HPLC) and identity. The result is published as a Certificate of Analysis for that batch.',
   },
   {
     question: 'Where is my Certificate of Analysis (CoA)?',
     answer:
-      'Every product page shows its current batch and CoA download. You can also look up any batch directly on the Quality & CoAs page.',
+      'Every product page shows its current batch and CoA. You can also look up any batch by its number on the Lab Testing & CoAs page.',
+  },
+  {
+    question: 'When will my order be dispatched?',
+    answer:
+      'Orders placed and paid for by 2.30pm, Monday to Friday, are dispatched the same working day. Later orders, and orders at weekends or on bank holidays, go out the next working day.',
+  },
+  {
+    question: 'Which delivery options do you offer?',
+    answer:
+      'Royal Mail only, to UK addresses only: Tracked 48 (£3.95, free over £100), Tracked 24 (£4.95, next working day aim) and Special Delivery guaranteed by 1pm (£10.95).',
+  },
+  {
+    question: 'How do I pay?',
+    answer:
+      'Payment is taken securely at checkout by our payment provider. We never see or store your card details. You can check out as a guest or create an account.',
+  },
+  {
+    question: 'How should products be stored?',
+    answer:
+      'Store sealed peptide vials at -20 °C, protected from light and moisture. Store bacteriostatic water unopened at 15-25 °C, and at 2-8 °C once opened.',
+  },
+  {
+    question: 'How do I check my order status?',
+    answer: 'Use the Order Status page with your order number and the email used at checkout, or sign in to see your full order history.',
   },
   {
     question: 'What does Research Use Only (RUO) mean?',
@@ -32,10 +49,12 @@ export const FAQ = [
   },
   {
     question: 'What’s in a bundle?',
-    answer: 'A bundle is a set of separate, individually vialled products sold together, not a pre-mixed product. Each bundle’s own page lists exactly what’s included.',
+    answer:
+      'A bundle is a set of separate, individually vialled products sold together at a lower price, never a pre-mixed product. Bundle prices apply automatically in your cart.',
   },
   {
     question: 'What is your returns policy?',
-    answer: 'See our Returns Policy for the full terms.',
+    answer:
+      'You can cancel free of charge before dispatch, and return sealed, unopened items within 14 days. Faulty, damaged or incorrect items must be reported within 48 hours of delivery. See our Returns and Refunds Policy for the full terms.',
   },
 ]

@@ -28,6 +28,7 @@ export function StatCounter({ value, label, note }: { value: string; label: stri
 
   useEffect(() => {
     if (target === null) return
+    const end = target
     const el = ref.current
     if (!el) return
     if (typeof IntersectionObserver === 'undefined' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
@@ -40,7 +41,7 @@ export function StatCounter({ value, label, note }: { value: string; label: stri
         let raf = 0
         function tick(now: number) {
           const t = Math.min(1, (now - start) / COUNT_MS)
-          setDisplay(t >= 1 ? value : `${Math.round(target * easeOutCubic(t))}${suffix}`)
+          setDisplay(t >= 1 ? value : `${Math.round(end * easeOutCubic(t))}${suffix}`)
           if (t < 1) raf = requestAnimationFrame(tick)
         }
         raf = requestAnimationFrame(tick)

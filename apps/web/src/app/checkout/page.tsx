@@ -1,19 +1,14 @@
 'use client'
 
 import type { DiscountValidationResult, Product, ShippingOption } from '@kineris/shared'
-import { UK_ONLY_COUNTRY_CODE } from '@kineris/shared'
+import { shippingPriceMinorUnits, UK_ONLY_COUNTRY_CODE } from '@kineris/shared'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useCart } from '@/contexts/CartContext'
 import { useCustomerAuth } from '@/contexts/CustomerAuthContext'
 import { api, ApiError } from '@/lib/api'
+import { priceCart, resolveVariants } from '@/lib/cartPricing'
 import { formatGBP } from '@/lib/money'
-
-interface ResolvedVariant {
-  productName: string
-  size: string
-  priceMinorUnits: number
-}
 
 type ContactMode = 'guest' | 'sign-in' | 'create-account'
 
@@ -39,6 +34,7 @@ export default function CheckoutPage() {
 
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [ruoAccepted, setRuoAccepted] = useState(false)
+  const [ageConfirmed, setAgeConfirmed] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -56,18 +52,17 @@ export default function CheckoutPage() {
     if (customer && customer !== 'loading') setEmail(customer.email)
   }, [customer])
 
-  const variantMap = new Map<string, ResolvedVariant>()
-  for (const p of products) {
-    for (const v of p.variants) variantMap.set(v.id, { productName: p.name, size: v.size, priceMinorUnits: v.priceMinorUnits })
-  }
-
-  const subtotal = lines.reduce((sum, l) => sum + (variantMap.get(l.variantId)?.priceMinorUnits ?? 0) * l.quantity, 0)
+  const variantMap = resolveVariants(products)
+  const pricing = priceCart(lines, variantMap)
+  const goodsTotal = pricing.goodsTotal
   const shipping = shippingOptions.find((s) => s.id === shippingOptionId)
+  const shippingCost = shipping ? shippingPriceMinorUnits(shipping, goodsTotal) : 0
   const discountMinorUnits = appliedDiscount?.discountAmountMinorUnits ?? 0
-  const total = Math.max(0, subtotal - discountMinorUnits) + (shipping?.priceMinorUnits ?? 0)
+  const total = Math.max(0, goodsTotal - discountMinorUnits) + shippingCost
 
   const signedIn = customer && customer !== 'loading'
-  const canSubmit = lines.length > 0 && email && shippingOptionId && termsAccepted && ruoAccepted && !submitting
+  const canSubmit =
+    lines.length > 0 && email && shippingOptionId && termsAccepted && ruoAccepted && ageConfirmed && !submitting
 
   async function inlineSignIn() {
     setContactSubmitting(true)
@@ -102,7 +97,7 @@ export default function CheckoutPage() {
     try {
       const result = await api<DiscountValidationResult>('/api/discount-codes/validate', {
         method: 'POST',
-        body: JSON.stringify({ code: discountCode.toUpperCase(), subtotalMinorUnits: subtotal, customerEmail: email }),
+        body: JSON.stringify({ code: discountCode.toUpperCase(), subtotalMinorUnits: goodsTotal, customerEmail: email }),
       })
       if (result.valid) {
         setAppliedDiscount({ code: discountCode.toUpperCase(), discountAmountMinorUnits: result.discountAmountMinorUnits })
@@ -232,7 +227,9 @@ export default function CheckoutPage() {
 
         <section>
           <h2 className="mb-3 text-sm font-medium text-ink">Shipping address</h2>
-          <p className="mb-3 text-xs text-ink-hint">UK addresses only at launch.</p>
+          <p className="mb-3 text-xs text-ink-hint">
+            We deliver to UK addresses only. We can&rsquo;t accept orders for delivery outside the United Kingdom.
+          </p>
           <div className="grid gap-3 sm:grid-cols-2">
             <input placeholder="Address line 1" className="rounded-sm border border-border px-3 py-2 text-sm sm:col-span-2" />
             <input placeholder="Town / city" className="rounded-sm border border-border px-3 py-2 text-sm" />
@@ -256,7 +253,9 @@ export default function CheckoutPage() {
                   />
                   {opt.label} <span className="text-ink-hint">({opt.etaLabel})</span>
                 </span>
-                <span className="data-figure">{formatGBP(opt.priceMinorUnits)}</span>
+                <span className="data-figure">
+                  {shippingPriceMinorUnits(opt, goodsTotal) === 0 ? 'Free' : formatGBP(opt.priceMinorUnits)}
+                </span>
               </label>
             ))}
           </div>
@@ -303,19 +302,21 @@ export default function CheckoutPage() {
         <section className="rounded-md border border-border bg-surface p-4">
           <h2 className="mb-3 text-sm font-medium text-ink">Order summary</h2>
           <ul className="space-y-1 text-sm">
-            {lines.map((l) => {
-              const v = variantMap.get(l.variantId)
-              if (!v) return null
-              return (
-                <li key={l.variantId} className="flex justify-between">
-                  <span className="text-ink-muted">
-                    {v.productName} ({v.size}) &times; {l.quantity}
-                  </span>
-                  <span className="data-figure">{formatGBP(v.priceMinorUnits * l.quantity)}</span>
-                </li>
-              )
-            })}
+            {pricing.resolved.map(({ line: l, variant: v }) => (
+              <li key={l.variantId} className="flex justify-between gap-4">
+                <span className="text-ink-muted">
+                  {v.productName} ({v.size}) &times; {l.quantity}
+                </span>
+                <span className="data-figure">{formatGBP(v.priceMinorUnits * l.quantity)}</span>
+              </li>
+            ))}
           </ul>
+          {pricing.bundles.savingMinorUnits > 0 && (
+            <div className="mt-3 flex justify-between gap-4 border-t border-border pt-3 text-sm text-accent">
+              <span>Bundle savings</span>
+              <span className="data-figure">-{formatGBP(pricing.bundles.savingMinorUnits)}</span>
+            </div>
+          )}
           {appliedDiscount && (
             <div className="mt-3 flex justify-between border-t border-border pt-3 text-sm text-accent">
               <span>Discount ({appliedDiscount.code})</span>
@@ -324,7 +325,7 @@ export default function CheckoutPage() {
           )}
           <div className="mt-3 flex justify-between border-t border-border pt-3 text-sm">
             <span className="text-ink-muted">Shipping</span>
-            <span className="data-figure">{shipping ? formatGBP(shipping.priceMinorUnits) : '...'}</span>
+            <span className="data-figure">{shipping ? (shippingCost === 0 ? 'Free' : formatGBP(shippingCost)) : '...'}</span>
           </div>
           <div className="mt-2 flex justify-between text-base font-semibold text-ink">
             <span>Total</span>
@@ -346,9 +347,12 @@ export default function CheckoutPage() {
           </label>
           <label className="flex items-start gap-2 text-sm text-ink-muted">
             <input type="checkbox" checked={ruoAccepted} onChange={(e) => setRuoAccepted(e.target.checked)} className="mt-0.5" />
-            I confirm these products are being purchased for laboratory research use only, not for
-            human or veterinary use, and I accept responsibility for handling, storage, and
-            preparation after delivery.
+            I confirm these products are for laboratory research use only and are not for human or
+            veterinary use, and I accept responsibility for their safe handling.
+          </label>
+          <label className="flex items-start gap-2 text-sm text-ink-muted">
+            <input type="checkbox" checked={ageConfirmed} onChange={(e) => setAgeConfirmed(e.target.checked)} className="mt-0.5" />
+            I confirm I am 18 or over.
           </label>
         </section>
 

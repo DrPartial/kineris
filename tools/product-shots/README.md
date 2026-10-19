@@ -24,7 +24,7 @@ The vial is an AI-generated studio photo (`assets/vial-plate.png`, made with Hig
 ## Adding or changing a product
 
 Edit `products.json` (`name` is one string per line, `sub` is the optional line under the name,
-`sizes` makes one image per size) and re-run. The label region coordinates in `build.py`
+`sizes` makes one image per size, `eyebrow` optionally replaces the "Lyophilised powder" line, e.g. for a liquid) and re-run. The label region coordinates in `build.py`
 (`X0/X1/Y0/Y1`) are measured on this specific plate; if the plate is replaced, re-measure them.
 
 ## Keeping it in sync with the catalogue

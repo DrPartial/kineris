@@ -30,7 +30,7 @@ test('every product image belongs to a catalogue product and size', () => {
 
 test('an unknown size falls back to no image, never another strength', () => {
   assert.equal(productImageSrc('bpc-157', '20mg'), null)
-  assert.equal(productImageSrc('bpc-157', '10 MG'), '/products/bpc-157-10mg.webp')
+  assert.equal(productImageSrc('bpc-157', '5 MG'), '/products/bpc-157-5mg.webp')
   assert.equal(productImageSrc('bpc-157'), '/products/bpc-157-5mg.webp')
   assert.equal(productImageSrc('not-a-product', '5mg'), null)
 })

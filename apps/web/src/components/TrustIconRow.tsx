@@ -1,6 +1,7 @@
-// Copy here is restricted to what's actually true today -- not "Independent
-// Lab Verified" (still an OPEN item, see docs/PROJECT_NOTES.md) and not a
-// payment-specific claim like "3-D Secure" (no live Stripe key yet).
+// Kineris has committed to independent third-party testing of every batch
+// (Sean, October 2026), so "Third-party tested" is used; every batch needs a
+// real independent CoA behind it before launch. No payment-specific claim
+// like "3-D Secure" (no live payment provider yet).
 const ICONS = {
   batch: (
     <path d="M4 7h16M4 7l1.5 12a2 2 0 0 0 2 1.8h9a2 2 0 0 0 2-1.8L20 7M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3" />
@@ -11,10 +12,10 @@ const ICONS = {
 } as const
 
 const DEFAULT_ITEMS = [
-  { icon: 'batch', label: 'Batch & lot tracked' },
-  { icon: 'coa', label: 'Certificate of Analysis per batch' },
-  { icon: 'truck', label: 'UK dispatch' },
-  { icon: 'check', label: 'RUO checkout declaration' },
+  { icon: 'check', label: 'Third-party tested' },
+  { icon: 'coa', label: 'CoA for every batch' },
+  { icon: 'truck', label: 'Same-day dispatch, order by 2.30pm' },
+  { icon: 'batch', label: 'UK-based specialists' },
 ] satisfies { icon: keyof typeof ICONS; label: string }[]
 
 export function TrustIconRow({
@@ -32,7 +33,7 @@ export function TrustIconRow({
       className={
         centered
           ? 'flex flex-wrap items-center justify-center gap-x-10 gap-y-3'
-          : `grid gap-4 ${condensed ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-2 sm:grid-cols-4'}`
+          : `grid gap-4 ${items.length === 3 ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-2 sm:grid-cols-4'}`
       }
     >
       {items.map((item) => (

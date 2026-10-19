@@ -10,7 +10,7 @@ import { useOverlay } from '@/contexts/OverlayContext'
 const NAV_LINKS = [
   { href: '/shop', label: 'Shop' },
   { href: '/shop?category=bundle', label: 'Bundles' },
-  { href: '/quality', label: 'Quality & CoAs' },
+  { href: '/quality', label: 'Lab Testing & CoAs' },
   { href: '/faq', label: 'FAQ' },
   { href: '/about', label: 'About' },
   { href: '/contact', label: 'Contact' },

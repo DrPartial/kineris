@@ -12,8 +12,7 @@ const LEGAL_LINKS = [
 /**
  * Pack 8's exact footer list: "company name, registration number,
  * registered address, contact email (UK law requires these on the site),
- * RUO statement, legal links." The registration details are placeholders,
- * real company-number/address/email come from Sean/Connor.
+ * RUO statement, legal links." Company details confirmed by Sean (October 2026).
  */
 export function SiteFooter() {
   return (
@@ -35,15 +34,13 @@ export function SiteFooter() {
           ))}
         </nav>
         <div className="space-y-1 text-xs">
-          <p>Kineris Labs Ltd (placeholder, confirm registered company name)</p>
-          <p>Company registration number: [placeholder]</p>
-          <p>Registered address: [placeholder, UK]</p>
+          <p>SHPP Ltd, trading as Kineris Labs. Registered in England and Wales, company number 17528699.</p>
+          <p>Registered office: Suite 137, 5 High Street, Maidenhead, Berkshire, SL6 1JN, United Kingdom</p>
           <p>
             Contact:{' '}
             <a href="mailto:hello@kinerislabs.com" className="hover:text-ink">
               hello@kinerislabs.com
-            </a>{' '}
-            (placeholder address)
+            </a>
           </p>
         </div>
       </div>

@@ -3,38 +3,12 @@
 import type { Product } from '@kineris/shared'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { CartAddOn, CartTotalsBlock, FreeShippingProgress } from '@/components/CartTotals'
 import { ProductImage } from '@/components/ProductImage'
 import { useCart } from '@/contexts/CartContext'
 import { api } from '@/lib/api'
+import { priceCart, resolveVariants, type ResolvedVariant } from '@/lib/cartPricing'
 import { formatGBP } from '@/lib/money'
-
-interface ResolvedVariant {
-  variantId: string
-  productSlug: string
-  productName: string
-  molecularFormula: string | null
-  size: string
-  priceMinorUnits: number
-  stock: number
-}
-
-function resolveVariants(products: Product[]): Map<string, ResolvedVariant> {
-  const map = new Map<string, ResolvedVariant>()
-  for (const p of products) {
-    for (const v of p.variants) {
-      map.set(v.id, {
-        variantId: v.id,
-        productSlug: p.slug,
-        productName: p.name,
-        molecularFormula: p.molecularFormula,
-        size: v.size,
-        priceMinorUnits: v.priceMinorUnits,
-        stock: v.stock,
-      })
-    }
-  }
-  return map
-}
 
 export default function CartPage() {
   const { lines, setQuantity, removeLine } = useCart()
@@ -49,11 +23,9 @@ export default function CartPage() {
 
   if (loading) return <div className="mx-auto max-w-3xl px-4 py-10 text-sm text-ink-muted">Loading cart...</div>
 
-  const resolvedLines = lines
-    .map((l) => ({ line: l, variant: variantMap.get(l.variantId) }))
-    .filter((r): r is { line: typeof lines[number]; variant: ResolvedVariant } => r.variant !== undefined)
+  const pricing = priceCart(lines, variantMap)
+  const resolvedLines = pricing.resolved
 
-  const subtotal = resolvedLines.reduce((sum, r) => sum + r.variant.priceMinorUnits * r.line.quantity, 0)
 
   if (resolvedLines.length === 0) {
     return (
@@ -114,9 +86,10 @@ export default function CartPage() {
         ))}
       </ul>
 
-      <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
-        <span className="text-sm text-ink-muted">Subtotal</span>
-        <span className="data-figure text-lg font-semibold text-ink">{formatGBP(subtotal)}</span>
+      <div className="mt-6 space-y-4 border-t border-border pt-4">
+        <FreeShippingProgress pricing={pricing} />
+        <CartAddOn pricing={pricing} variants={variantMap} />
+        <CartTotalsBlock pricing={pricing} />
       </div>
 
       <Link

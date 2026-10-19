@@ -1,12 +1,7 @@
-import { SHIPPING_OPTIONS } from '@kineris/shared'
+import { DISPATCH_CUTOFF } from '@kineris/shared'
 import type { FastifyInstance } from 'fastify'
 import { prisma } from '../lib/prisma.ts'
 
-// Special Delivery Guaranteed by 1pm is the fastest/most precise of the
-// three configured Royal Mail placeholders -- read directly off the real
-// shared config, not inferred or invented, so it stays correct if the
-// options list changes shape later (falls back to the first option).
-const FASTEST_OPTION = SHIPPING_OPTIONS.find((o) => o.id === 'royal-mail-special-delivery-1pm') ?? SHIPPING_OPTIONS[0]
 
 /**
  * Public, real-data-only stats for the homepage's stats bar. Every number is
@@ -16,15 +11,17 @@ const FASTEST_OPTION = SHIPPING_OPTIONS.find((o) => o.id === 'royal-mail-special
  */
 export async function statsRoutes(app: FastifyInstance) {
   app.get('/api/stats', async () => {
+    // Purity is averaged over the tested figures on current batch CoAs, not
+    // the general spec, so the stat stays hidden until real CoAs are uploaded.
     const products = await prisma.product.findMany({
-      where: { published: true },
-      include: { variants: { take: 1 } },
+      where: { published: true, category: 'peptide' },
+      include: { batches: { where: { isCurrent: true }, take: 1 } },
     })
 
     const compoundCount = products.length
 
     const purities = products
-      .map((p) => p.variants[0]?.purity)
+      .map((p) => p.batches[0]?.purity)
       .filter((p): p is string => Boolean(p))
       .map((p) => Number(p.match(/(\d+(?:\.\d+)?)/)?.[1]))
       .filter((n): n is number => Number.isFinite(n))
@@ -37,7 +34,7 @@ export async function statsRoutes(app: FastifyInstance) {
     return {
       compoundCount,
       avgPurityPercent,
-      dispatchLabel: FASTEST_OPTION.etaLabel,
+      dispatchLabel: `Order by ${DISPATCH_CUTOFF.label}, Mon-Fri`,
     }
   })
 }

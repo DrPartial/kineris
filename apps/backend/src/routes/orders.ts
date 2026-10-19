@@ -1,4 +1,4 @@
-import { SHIPPING_OPTIONS } from '@kineris/shared'
+import { bundleSavings, SHIPPING_OPTIONS, shippingPriceMinorUnits } from '@kineris/shared'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 import { z } from 'zod'
 import { CUSTOMER_COOKIE } from '../lib/auth.ts'
@@ -22,7 +22,7 @@ async function optionalCustomerId(req: FastifyRequest): Promise<string | null> {
 }
 
 const RUO_DECLARATION_TEXT =
-  'I confirm these products are being purchased for laboratory research use only, not for human or veterinary use, and I accept responsibility for handling, storage, and preparation after delivery.'
+  'I confirm these products are for laboratory research use only and are not for human or veterinary use, and I accept responsibility for their safe handling.'
 const TERMS_DECLARATION_TEXT = 'I agree to the Terms & Conditions.'
 
 const checkoutSchema = z.object({
@@ -58,6 +58,7 @@ export async function orderRoutes(app: FastifyInstance) {
     try {
       const order = await prisma.$transaction(async (tx) => {
         let subtotal = 0
+        const pricedLines: { slug: string; size: string; quantity: number; unitPriceMinorUnits: number }[] = []
         const itemsData: {
           variantId: string
           batchId: string
@@ -85,6 +86,12 @@ export async function orderRoutes(app: FastifyInstance) {
           })
 
           subtotal += variant.priceMinorUnits * line.quantity
+          pricedLines.push({
+            slug: variant.product.slug,
+            size: variant.size,
+            quantity: line.quantity,
+            unitPriceMinorUnits: variant.priceMinorUnits,
+          })
           itemsData.push({
             variantId: variant.id,
             batchId: currentBatch.id,
@@ -93,6 +100,10 @@ export async function orderRoutes(app: FastifyInstance) {
           })
         }
 
+        // Bundle prices apply automatically to whatever vials qualify, the
+        // same calculation the storefront shows (packages/shared/src/catalogue.ts).
+        const goodsTotal = subtotal - bundleSavings(pricedLines).savingMinorUnits
+
         // A provided code that fails validation rejects the whole order
         // (specific reason), rather than the old behaviour of silently
         // applying zero discount for a bad code -- the customer would
@@ -100,13 +111,14 @@ export async function orderRoutes(app: FastifyInstance) {
         let discountMinorUnits = 0
         let validatedDiscountCodeId: string | null = null
         if (input.discountCode) {
-          const result = await validateDiscountCode(input.discountCode.toUpperCase(), subtotal, input.customerEmail)
+          const result = await validateDiscountCode(input.discountCode.toUpperCase(), goodsTotal, input.customerEmail)
           if (!result.valid) throw new OrderError(422, DISCOUNT_FAILURE_MESSAGES[result.reason])
           discountMinorUnits = result.discountAmountMinorUnits
           validatedDiscountCodeId = result.discountCodeId
         }
 
-        const totalMinorUnits = Math.max(0, subtotal - discountMinorUnits) + shipping.priceMinorUnits
+        const totalMinorUnits =
+          Math.max(0, goodsTotal - discountMinorUnits) + shippingPriceMinorUnits(shipping, goodsTotal)
         const now = new Date()
 
         const created = await tx.order.create({

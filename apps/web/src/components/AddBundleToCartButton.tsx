@@ -9,9 +9,18 @@ import { useOverlay } from '@/contexts/OverlayContext'
  * The cart has no concept of a bundle line item, only variant lines (see
  * CartContext), a bundle is "separate vials, never a pre-mixed blend"
  * (pack section 7), so adding one to the cart means adding each of its
- * component variants at the quantity the bundle needs.
+ * component variants at the quantity the bundle needs. The bundle price is
+ * then applied automatically in the cart and at checkout (bundleSavings).
  */
-export function AddBundleToCartButton({ bundle }: { bundle: Bundle }) {
+export function AddBundleToCartButton({
+  bundle,
+  label = 'Add bundle to cart',
+  className = 'w-full rounded-sm bg-accent px-5 py-3 text-sm font-medium text-bone hover:bg-accent-hover sm:w-auto',
+}: {
+  bundle: Bundle
+  label?: string
+  className?: string
+}) {
   const { addLine } = useCart()
   const { setOpenOverlay } = useOverlay()
   const [added, setAdded] = useState(false)
@@ -29,9 +38,9 @@ export function AddBundleToCartButton({ bundle }: { bundle: Bundle }) {
         setAdded(true)
         setOpenOverlay('cart')
       }}
-      className="w-full rounded-sm bg-accent px-5 py-3 text-sm font-medium text-bone hover:bg-accent-hover sm:w-auto"
+      className={className}
     >
-      {added ? 'Added to cart' : 'Add bundle to cart'}
+      {added ? 'Added to cart' : label}
     </button>
   )
 }

@@ -363,3 +363,38 @@ directly.
   (genuinely animating, not vanishing) and gone by 400ms; opening via both the header button and
   the auto-open-on-add path both work; the drawer shows the real product image, quantity control,
   remove, subtotal, and links to checkout and the full cart page.
+
+## 6 SKU launch range and the feedback-doc changes (19 October 2026)
+
+Sean's feedback doc for the first draft, applied in one pass. The range is now the 6 SKU Tissue & Repair
+catalogue: BPC-157 5mg, TB-500 2mg, GHK-Cu 50mg, KPV 10mg, SS-31 10mg and bacteriostatic water 10ml.
+
+- **Catalogue** (`packages/shared/src/catalogue.ts`): prices, launch stock, research area and full specs
+  (CAS, formula, weight, sequence, appearance, storage) taken from UK Peptides' pages for launch, as Sean
+  asked. TB-500 is specced as full-length Thymosin Beta-4; confirm the supplier's TB-500 matches before
+  launch. Batch purity is never seeded: it comes from the real CoA uploaded in admin, and the homepage
+  average-purity stat stays hidden until then.
+- **Bundles** are defined in `BUNDLES` with fixed prices (BPC+TB £159.95, 5-packs £79.95/£74.95, trio
+  £54.95). The cart still holds plain vial lines; `bundleSavings` finds the best bundle combination for
+  whatever vials are in the cart, and the storefront (`lib/cartPricing.ts`) and the order route price it
+  identically. Note: two 5-packs (£9.60 off) beat the BPC+TB bundle (£4.55 off) for the same 10 vials, so
+  buyers of that bundle are charged £154.90; the bundle price may want lowering to match.
+- **Shipping**: Royal Mail Tracked 48 £3.95 (free when goods total, after bundle savings, is over £100),
+  Tracked 24 £4.95, Special Delivery by 1pm £10.95. Same-day dispatch cut-off 2.30pm Mon-Fri
+  (`DISPATCH_CUTOFF`), shown as a live countdown; bank holidays and half-days aren't modelled yet, and the
+  cut-off is a code constant, not an admin setting.
+- **Applying to a deployed database**: the products, specs, stock and bundles only change where
+  `pnpm db:seed` is run. The seed wipes orders and resets stock, so run it only on a pre-launch database.
+- **Images**: KPV, SS-31 and bacteriostatic water shots added (`products.json` gained an optional
+  `eyebrow`, used for "Sterile solution"); the 16-product shots, hero video and lab/macro stills (which
+  showed Tesamorelin and a 10mg BPC-157 we don't sell) were removed. The hero is now
+  `public/home/range-lineup.webp`, composited from the shots by `tools/product-shots/lineup.py`.
+- **Copy**: hero, trust strip, specialist block, FAQ preview, Lab Testing & CoAs page, About, and the four
+  policies (`lib/policies.ts`, from the feedback doc; still need payment provider, ICO number and solicitor
+  review). Footer and policies carry SHPP Ltd's company details. "Repair" stays on the banned-word list for
+  product copy; it appears only in the range name Sean approved.
+- **Checkout**: the RUO declaration wording now matches the feedback doc, and an 18+ confirmation is
+  required (checked in the browser only; it isn't stored with the order yet).
+- **Not done here**: the first-order offer as a no-code A/B switch, and real (independent) CoA PDFs. The
+  supplier's Janoshik placeholders were deliberately not committed, since this repo is public and they name
+  the supplier.

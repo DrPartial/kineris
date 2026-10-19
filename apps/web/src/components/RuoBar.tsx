@@ -1,15 +1,12 @@
-import { SHIPPING_OPTIONS } from '@kineris/shared'
-import { formatGBP } from '@/lib/money'
-
-const cheapestShipping = SHIPPING_OPTIONS.reduce((min, opt) => (opt.priceMinorUnits < min.priceMinorUnits ? opt : min))
+import { DISPATCH_CUTOFF, FREE_SHIPPING_THRESHOLD_MINOR_UNITS } from '@kineris/shared'
 
 /**
  * Pack 2.1: RUO must be visible throughout the site, not hidden in the
  * footer. Rendered in the root layout so every single page carries it,
  * rather than being a per-page decision someone could forget to add. Also
- * carries a real shipping fact (sourced from the actual configured options,
- * not an invented free-shipping threshold) instead of a separate
- * announcement bar, so the RUO line isn't duplicated across two strips.
+ * doubles as the announcement bar (free-delivery threshold and dispatch
+ * cut-off, both read from the shared shipping config), so the RUO line isn't
+ * duplicated across two strips.
  *
  * sticky + z-50 so it stays visible above every overlay (drawer, search,
  * account, welcome modal -- all z-40, see Modal.tsx) rather than being
@@ -28,7 +25,8 @@ export function RuoBar() {
           default) + text-center lets the sentence actually wrap below sm. */}
       <div className="mx-auto flex max-w-6xl flex-col justify-between gap-1 px-4 py-2 sm:flex-row sm:items-center">
         <span className="data-figure min-w-0 text-center">
-          Tracked UK dispatch from {formatGBP(cheapestShipping.priceMinorUnits)}
+          Free tracked UK delivery over £{FREE_SHIPPING_THRESHOLD_MINOR_UNITS / 100} &middot; Order by{' '}
+          {DISPATCH_CUTOFF.label} for next-day delivery
         </span>
         <span className="min-w-0 text-center">For laboratory research use only. Not for human or veterinary use.</span>
       </div>

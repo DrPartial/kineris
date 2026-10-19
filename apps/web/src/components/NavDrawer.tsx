@@ -9,8 +9,8 @@ import { useOverlay } from '@/contexts/OverlayContext'
 const PRIMARY_LINKS = [
   { href: '/shop?category=peptide', label: 'Peptides' },
   { href: '/shop?category=bundle', label: 'Bundles' },
-  { href: '/shop?category=lab-supply', label: 'Lab Supplies' },
-  { href: '/quality', label: 'Quality & CoAs' },
+  { href: '/shop?category=lab_supply', label: 'Lab Supplies' },
+  { href: '/quality', label: 'Lab Testing & CoAs' },
 ]
 
 const SECONDARY_LINKS = [

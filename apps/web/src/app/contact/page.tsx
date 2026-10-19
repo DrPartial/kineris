@@ -7,10 +7,10 @@ export default function ContactPage() {
 
       <p className="mt-4 text-sm text-ink-muted">
         For order, shipping or CoA queries, email{' '}
-        <a href="mailto:support@kinerislabs.com" className="text-accent hover:text-accent-hover">
-          support@kinerislabs.com
-        </a>{' '}
-        (placeholder address).
+        <a href="mailto:hello@kinerislabs.com" className="text-accent hover:text-accent-hover">
+          hello@kinerislabs.com
+        </a>
+        . SHPP Ltd, trading as Kineris Labs, Suite 137, 5 High Street, Maidenhead, Berkshire, SL6 1JN, United Kingdom.
       </p>
 
       <dl className="mt-10 space-y-6">

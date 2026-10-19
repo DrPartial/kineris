@@ -10,7 +10,7 @@ import { formatGBP } from '@/lib/money'
 
 const CATEGORY_LABEL: Record<Product['category'], string> = {
   peptide: 'Peptides',
-  'lab-supply': 'Lab Supplies',
+  lab_supply: 'Lab Supplies',
   bundle: 'Bundles',
 }
 
