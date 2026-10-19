@@ -69,7 +69,7 @@ const STEPS = [
   },
   {
     title: 'Next Day Delivery',
-    body: 'Order before 2.30pm for next day delivery. Or standard 2-3 business day delivery in insulated, protective packaging for guaranteed quality.',
+    body: 'Order before 2.30pm for next day delivery. Or choose standard 2-3 business day delivery. Insulated, protective packaging maintains compound stability.',
   },
 ]
 
@@ -306,18 +306,18 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* How it works, Protide-style: a centred heading over three soft cards. */}
-      <section className="bg-surface">
+      <section className="bg-surface-sunken">
         <div className="mx-auto max-w-6xl px-4 py-24 sm:py-28">
           <Reveal>
-            <h2 className={`${h2} text-center`}>How It Works</h2>
+            <h2 className={`${h2} max-w-xl`}>How it Works</h2>
           </Reveal>
-          <ol className="mt-14 grid gap-5 md:grid-cols-3 md:gap-8">
+          <ol className="mt-14 grid gap-12 sm:grid-cols-3 sm:gap-10">
             {STEPS.map((step, i) => (
-              <Reveal key={step.title} delay={i * 100} className="h-full">
-                <li className="h-full rounded-lg bg-surface-sunken px-8 py-10 text-center">
-                  <h3 className="text-balance font-display text-2xl font-semibold tracking-tight text-ink">{step.title}</h3>
-                  <p className="mt-4 leading-relaxed text-ink-muted">{step.body}</p>
+              <Reveal key={step.title} delay={i * 100}>
+                <li className="border-t border-border-strong pt-6">
+                  <span className="data-figure text-sm font-medium text-accent">0{i + 1}</span>
+                  <h3 className="mt-3 font-display text-xl font-semibold tracking-tight text-ink">{step.title}</h3>
+                  <p className="mt-2 max-w-xs text-ink-muted">{step.body}</p>
                 </li>
               </Reveal>
             ))}
